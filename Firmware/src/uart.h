@@ -30,7 +30,7 @@ Buffer txBuff;
 Buffer rxBuff;
 
 uint8_t commandDelimiter = 0xFF;
-typedef void (*CommandHandler)(uint8_t* data, uint8_t size);
+typedef void (*CommandHandler)(uint8_t* data, uint8_t length);
 CommandHandler commandHandler = NULL;
 
 void uartBegin(uint16_t baudrate);

@@ -7,4 +7,6 @@
 #include "uart.h"
 #include "config.h"
 
+void onCommandReceived(uint8_t* data, uint8_t length);
+
 #endif
