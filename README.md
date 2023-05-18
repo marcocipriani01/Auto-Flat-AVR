@@ -9,14 +9,20 @@ Auto Flat is PC-controlled lightbox and dust cover implmented using the Alnitak 
 ## Serial protocol
 
 ```
-Send     : ">SOOO\r"      //request state
-Recieve  : "*S19OOO\n"    //returned state
-Send     : ">B128\r"      //set brightness 128
-Recieve  : "*B19128\n"    //confirming brightness set to 128
-Send     : ">JOOO\r"      //get brightness
-Recieve  : "*B19128\n"    //brightness value of 128 (assuming as set from above)
-Send     : ">LOOO\r"      //turn light on (uses set brightness value)
-Recieve  : "*L19OOO\n"    //confirms light turned on
-Send     : ">DOOO\r"      //turn light off (brightness value does not change, just the state of the light)
-Recieve  : "*D19OOO\n"    //confirms light turned off
+Send   :  ">SOOO\r"      // Request state
+Receive:  "*S19OOO\n"    // Return state
+
+Send   :  ">B128\r"      // Set brightness to 128
+Receive:  "*B19128\n"    // Confirming brightness set to 128
+
+Send   :  ">JOOO\r"      // Get brightness
+Receive:  "*B19128\n"    // Brightness value of 128 (assuming it was set from above)
+
+Send   :  ">LOOO\r"      // Turn light on (uses set brightness value)
+Receive:  "*L19OOO\n"    // Confirms light turned on
+
+Send   :  ">DOOO\r"      // Turn light off (brightness value does not change, just the state of the light)
+Receive:  "*D19OOO\n"    // Confirms light turned off
 ```
+
+TODO: add the rest of the commands.
