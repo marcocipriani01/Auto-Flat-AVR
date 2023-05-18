@@ -35,13 +35,15 @@ void setCommandHandler(CommandHandler handler) {
 }
 
 void setRxMode() {
-    // Disable TX interrupt, enable RX interrupt
-    UCSR0B = (UCSR0B & (~(1 << TXCIE0))) | (1 << RXCIE0);
+    // Disable UDR0 interrupt, enable RX interrupt
+    UCSR0B = (UCSR0B & (~(1 << UDRIE0))) | (1 << RXCIE0);
     uartMode = Rx;
 }
 
 void setTxMode() {
-    
+    // Disable RX interrupt, enable UDR0 interrupt
+    UCSR0B = (UCSR0B & (~(1 << RXCIE0))) | (1 << UDRIE0);
+    uartMode = Tx;
 }
 
 void uartWrite(uint8_t* data, uint8_t length) {
@@ -52,17 +54,14 @@ void uartWrite(uint8_t* data, uint8_t length) {
     }
     txBuff.size = length;
     txBuff.index = 0;
-    // Switch to Tx mode
-    // Disable RX interrupt, enable TX interrupt
-    UCSR0B = (UCSR0B & (~(1 << RXCIE0))) | (1 << TXCIE0);
+
+    // Switch to TX mode
+    setTxMode();
     if (UCSR0A & (1 << UDRE0)) {
         // If the data register is empty, transmit the first byte
         uartMode = Tx;
         UDR0 = txBuff.buffer[0];
         txBuff.index++;
-    } else {
-        // If the data register is not empty, wait for USART_RX_vect
-        uartMode = SwitchToTx;
     }
 }
 
@@ -79,32 +78,17 @@ ISR(USART_RX_vect) {
     // Call the command handler if necessary
     if ((commandDelimiter != 0xFF) && (rcv == commandDelimiter) && (commandHandler != NULL))
         (*commandHandler)(rxBuff.buffer, rxBuff.index);
-
-    // Switch to TX mode if necessary
-    if ((uartMode == SwitchToTx) && (UCSR0A & (1 << UDRE0))) {
-        uartMode = Tx;
-        UDR0 = txBuff.buffer[0];
-        txBuff.index++;
-    }
 }
 
 // USART Data Register (UDR0) empty
 ISR(USART_UDRE_vect) {
-    if ((uartMode == Rx) || (uartMode == SwitchToTx)) {
-        // Receive one byte and put it in the receive buffer
-        uint8_t rcv = rxBuff.buffer[rxBuff.index] = UDR0;
-        rxBuff.index++;
-        if ((commandDelimiter != 0xFF) && (rcv == commandDelimiter) && (commandHandler != NULL))
-            (*commandHandler)(rxBuff.buffer, rxBuff.index);
-        if (rxBuff.index >= MAX_BUFF_SIZE) {
-            // Buffer overflow
-            rxBuff.index = 0;
-        }
-        if (uartMode == SwitchToTx) {
-            // Switch to Tx mode
-            setTxMode();
-        }
-    } else {
-        
+    UDR0 = txBuff.buffer[txBuff.index];
+    txBuff.index++;
+    if (txBuff.index >= txBuff.size) {
+        // All data has been transmitted, reset buffer
+        txBuff.index = 0;
+        txBuff.size = 0;
+        // Switch to RX mode
+        setRxMode();
     }
 }

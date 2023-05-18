@@ -7,6 +7,7 @@
 #include "config.h"
 
 #ifndef F_CPU
+#warning "F_CPU not defined, using 16MHz by default"
 #define F_CPU 16000000UL
 #endif
 
@@ -14,8 +15,7 @@
 
 typedef enum UartMode {
     Rx = 0,
-    Tx = 1,
-    SwitchToTx = 2
+    Tx = 1
 };
 
 typedef struct{
@@ -37,5 +37,10 @@ void uartBegin(uint16_t baudrate);
 
 void setCommandDelimiter(uint8_t delimiter);
 void setCommandHandler(CommandHandler handler);
+
+void setRxMode();
+void setTxMode();
+
+void uartWrite(uint8_t* data, uint8_t length);
 
 #endif
