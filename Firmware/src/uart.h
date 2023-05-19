@@ -31,13 +31,6 @@ typedef struct {
 extern Buffer txBuff;
 extern Buffer rxBuff;
 
-typedef enum {
-    Rx = 0,
-    Tx = 1
-} UartMode;
-
-extern UartMode uartMode;
-
 extern uint8_t commandDelimiter;
 typedef void (*CommandHandler)(uint8_t* data, uint8_t length);
 extern CommandHandler commandHandler;

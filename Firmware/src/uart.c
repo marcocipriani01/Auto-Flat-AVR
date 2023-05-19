@@ -3,8 +3,6 @@
 Buffer txBuff;
 Buffer rxBuff;
 
-UartMode uartMode;
-
 uint8_t commandDelimiter;
 CommandHandler commandHandler;
 
@@ -18,7 +16,6 @@ void uartBegin(uint16_t baudrate) {
     UCSR0B = (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0);
     // The TXCIE0 bit is enabled only when transmitting data
     // This solves the problem of the single data buffer for both TX and RX
-    uartMode = Rx;
 
     // Set the data frame to 8 bits
     UCSR0C = (1 << UCSZ00) | (1 << UCSZ01);
@@ -46,16 +43,14 @@ void setCommandHandler(CommandHandler handler) {
     commandHandler = handler;
 }
 
-void setRxMode() {
+inline void setRxMode() {
     // Disable UDR0 interrupt, enable RX interrupt
     UCSR0B = (UCSR0B & (~(1 << UDRIE0))) | (1 << RXCIE0);
-    uartMode = Rx;
 }
 
-void setTxMode() {
+inline void setTxMode() {
     // Disable RX interrupt, enable UDR0 interrupt
     UCSR0B = (UCSR0B & (~(1 << RXCIE0))) | (1 << UDRIE0);
-    uartMode = Tx;
 }
 
 void uartWrite(uint8_t* data, uint8_t length) {
@@ -69,9 +64,7 @@ void uartWrite(uint8_t* data, uint8_t length) {
     setTxMode();
     if (UCSR0A & (1 << UDRE0)) {
         // If the data register is empty, transmit the first byte
-        uartMode = Tx;
-        UDR0 = txBuff.buffer[0];
-        txBuff.index++;
+        UDR0 = txBuff.buffer[txBuff.index++];
     }
 }
 
@@ -96,8 +89,7 @@ ISR(RX_ISR) {
 
 // USART Data Register (UDR0) empty
 ISR(UDRE_ISR) {
-    UDR0 = txBuff.buffer[txBuff.index];
-    txBuff.index++;
+    UDR0 = txBuff.buffer[txBuff.index++];
     if (txBuff.index >= txBuff.size) {
         // All data has been transmitted, reset buffer
         txBuff.index = 0;

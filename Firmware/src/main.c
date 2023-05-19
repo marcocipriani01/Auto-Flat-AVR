@@ -20,7 +20,5 @@ int main(void) {
 }
 
 void onCommandReceived(uint8_t* data, uint8_t length) {
-    for (uint8_t i = 0; i < length; i++) {
-        uartWrite(&data[i], 1);
-    }
+    uartWrite(data, length);
 }
