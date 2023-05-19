@@ -2,6 +2,7 @@
 #define UART_H
 
 #include <stdlib.h>
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
@@ -20,7 +21,7 @@
 #define UDRE_ISR USART_UDRE_vect
 #endif
 
-#define MAX_BUFF_SIZE 32
+#define MAX_BUFF_SIZE 64
 
 typedef struct {
     uint8_t buffer[MAX_BUFF_SIZE];
@@ -44,5 +45,9 @@ void setRxMode();
 void setTxMode();
 
 void uartWrite(uint8_t* data, uint8_t length);
+void uartPrint(const char* data);
+void uartPrintln(const char* data);
+void uartPrintInt(int val);
+void uartPrintlnInt(int val);
 
 #endif
