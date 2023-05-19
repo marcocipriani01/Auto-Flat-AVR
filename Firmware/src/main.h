@@ -18,6 +18,6 @@
 void timer2init();
 void setPanelBrigthness(uint8_t brightness);
 
-void onCommandReceived(uint8_t* data, uint8_t length);
+void onCommandReceived(CircBuffer* buffer);
 
 #endif

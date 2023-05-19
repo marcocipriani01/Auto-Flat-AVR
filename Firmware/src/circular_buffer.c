@@ -38,3 +38,19 @@ BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* data) {
     buffer->tail = next;
     return BUFFER_OK;
 }
+
+BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* data, uint8_t length) {
+    uint8_t b;
+    while (circBufferPop(buffer, &b) == BUFFER_OK) {
+        *(data++) = b;
+        length--;
+        if (length == 0)
+            return BUFFER_OK;
+    }
+    return BUFFER_EMPTY;
+}
+
+void circBufferClear(CircBuffer* buffer) {
+    buffer->head = 0;
+    buffer->tail = 0;
+}

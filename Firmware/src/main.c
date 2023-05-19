@@ -81,11 +81,12 @@ void setShutter(ShutterStatus val) {
 }
 #endif
 
-void onCommandReceived(uint8_t* data, uint8_t length) {
-    for (uint8_t i = 0; i < length; i++) {
-        uint8_t c = data[i];
-        if (c != '>') continue;
-        switch (data[i + 1]) {
+void onCommandReceived(CircBuffer* buffer) {
+    uint8_t b;
+    while (circBufferPop(buffer, &b) != BUFFER_EMPTY) {
+        if (b != '>') continue;
+        if (circBufferPop(buffer, &b) == BUFFER_EMPTY) return;
+        switch ((char) b) {
             /*
               Ping device
               Request: >POOO\r
@@ -143,11 +144,13 @@ void onCommandReceived(uint8_t* data, uint8_t length) {
                yyy = value that brightness was set from 000-255
             */
             case 'B': {
+                char data[3];
+                if (circBufferPopArray(buffer, (uint8_t*) data, 3) == BUFFER_EMPTY) return;
 #if LOG_SCALE
-                brightness = (int) (exp(log(256.0) * ((double)(atoi((char*) (data + i + 2)) - 3) / 255.0)) - 1.0);
+                brightness = (int) (exp(log(256.0) * ((double)(atoi(data) - 3) / 255.0)) - 1.0);
                 brightness = constrain(brightness, 0, 255);
 #else
-                brightness = atoi((char*) (data + i + 2));
+                brightness = atoi(data);
 #endif
 #ifdef SERVO_PIN
                 if (lightOn && (coverStatus == CLOSED))

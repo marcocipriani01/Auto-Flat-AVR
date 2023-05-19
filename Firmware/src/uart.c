@@ -1,7 +1,7 @@
 #include "uart.h"
 
-Buffer txBuff;
-Buffer rxBuff;
+CircBuffer txBuff;
+CircBuffer rxBuff;
 
 uint8_t commandDelimiter;
 CommandHandler commandHandler;
@@ -20,15 +20,10 @@ void uartBegin(uint16_t baudrate) {
     // Set the data frame to 8 bits
     UCSR0C = _BV(UCSZ00) | _BV(UCSZ01);
 
-    // Clear buffers
-    for (uint8_t i = 0; i < MAX_BUFF_SIZE; i++) {
-        txBuff.buffer[i] = 0;
-        rxBuff.buffer[i] = 0;
-    }
-    txBuff.size = 0;
-    txBuff.index = 0;
-    rxBuff.size = 0;
-    rxBuff.index = 0;
+    // Initialize buffers
+    // Warning: malloc() is used here, so the buffers must be freed if the UART is disabled
+    circBufferInit(&txBuff, (uint8_t*) malloc(MAX_BUFF_SIZE), MAX_BUFF_SIZE);
+    circBufferInit(&rxBuff, (uint8_t*) malloc(MAX_BUFF_SIZE), MAX_BUFF_SIZE);
 
     // Setup variables
     commandDelimiter = 0xFF;
@@ -58,49 +53,60 @@ void uartWrite(uint8_t* data, uint8_t length) {
     // Copy data to buffer
     cli();
     for (uint8_t i = 0; i < length; i++) {
-        if (txBuff.size >= MAX_BUFF_SIZE) break;
-        txBuff.buffer[txBuff.size++] = data[i];
+        if (circBufferPush(&txBuff, data[i]) == BUFFER_FULL)
+            break;
     }
     sei();
 
     // Switch to TX mode
     setTxMode();
     // If the data register is empty, transmit the first byte
-    if (UCSR0A & (1 << UDRE0))
-        UDR0 = txBuff.buffer[txBuff.index++];
+    if (UCSR0A & (1 << UDRE0)) {
+        uint8_t b;
+        if (circBufferPop(&txBuff, &b) == BUFFER_OK)
+            UDR0 = b;
+    }  
 }
 
 void uartPrint(const char* data) {
     // Copy data to buffer
     char c;
     cli();
-    while (((c = *data++) != '\0') && (txBuff.size < MAX_BUFF_SIZE)) {
-        txBuff.buffer[txBuff.size++] = c;
+    while ((c = *(data++)) != '\0') {
+        if (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
+            break;
     }
     sei();
 
     // Switch to TX mode
     setTxMode();
     // If the data register is empty, transmit the first byte
-    if (UCSR0A & (1 << UDRE0))
-        UDR0 = txBuff.buffer[txBuff.index++];
+    if (UCSR0A & (1 << UDRE0)) {
+        uint8_t b;
+        if (circBufferPop(&txBuff, &b) == BUFFER_OK)
+            UDR0 = b;
+    }  
 }
 
 void uartPrintln(const char* data) {
     // Copy data to buffer
     char c;
     cli();
-    while (((c = *data++) != '\0') && (txBuff.size < MAX_BUFF_SIZE)) {
-        txBuff.buffer[txBuff.size++] = c;
+    while ((c = *(data++)) != '\0') {
+        if (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
+            break;
     }
-    txBuff.buffer[txBuff.size++] = '\n';
+    circBufferPush(&txBuff, (uint8_t) '\n');
     sei();
 
     // Switch to TX mode
     setTxMode();
     // If the data register is empty, transmit the first byte
-    if (UCSR0A & (1 << UDRE0))
-        UDR0 = txBuff.buffer[txBuff.index++];
+    if (UCSR0A & (1 << UDRE0)) {
+        uint8_t b;
+        if (circBufferPop(&txBuff, &b) == BUFFER_OK)
+            UDR0 = b;
+    }
 }
 
 void uartPrintInt(int val) {
@@ -118,29 +124,23 @@ void uartPrintlnInt(int val) {
 // USART RX complete
 ISR(RX_ISR) {
     // Receive one byte and put it in the receive buffer
-    uint8_t rcv = rxBuff.buffer[rxBuff.index++] = UDR0;
-    rxBuff.size++;
-    if (rxBuff.index >= MAX_BUFF_SIZE) {
-        // Buffer overflow
-        rxBuff.index = 0;
-    }
+    uint8_t rcv = UDR0;
+    circBufferPush(&rxBuff, rcv);
 
     // Call the command handler if necessary
     if ((commandDelimiter != 0xFF) && (rcv == commandDelimiter) && (commandHandler != NULL)) {
-        (*commandHandler)(rxBuff.buffer, rxBuff.size);
-        rxBuff.index = 0;
-        rxBuff.size = 0;
+        (*commandHandler)(&rxBuff);
+        // Clear the buffer, as we assume that the command handler has processed all the data
+        circBufferClear(&rxBuff);
     }
 }
 
 // USART Data Register (UDR0) empty
 ISR(UDRE_ISR) {
-    UDR0 = txBuff.buffer[txBuff.index++];
-    if (txBuff.index >= txBuff.size) {
-        // All data has been transmitted, reset buffer
-        txBuff.index = 0;
-        txBuff.size = 0;
-        // Switch to RX mode
+    uint8_t b;
+    circBufferPop(&txBuff, &b);
+    UDR0 = b;
+    // Switch to RX mode if the buffer is empty
+    if (isCircBufferEmpty(&txBuff))
         setRxMode();
-    }
 }

@@ -6,7 +6,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#include "config.h"
+#include "circular_buffer.h"
 
 #ifndef F_CPU
 #warning "F_CPU not defined, using 16MHz by default"
@@ -23,17 +23,11 @@
 
 #define MAX_BUFF_SIZE 64
 
-typedef struct {
-    uint8_t buffer[MAX_BUFF_SIZE];
-    uint8_t size;
-    uint8_t index;
-} Buffer;
+extern CircBuffer txBuff;
+extern CircBuffer rxBuff;
 
-extern Buffer txBuff;
-extern Buffer rxBuff;
-
+typedef void (*CommandHandler)(CircBuffer* buffer);
 extern uint8_t commandDelimiter;
-typedef void (*CommandHandler)(uint8_t* data, uint8_t length);
 extern CommandHandler commandHandler;
 
 void uartBegin(uint16_t baudrate);

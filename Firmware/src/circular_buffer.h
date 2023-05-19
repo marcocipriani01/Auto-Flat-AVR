@@ -21,5 +21,7 @@ void circBufferInit(CircBuffer* buffer, uint8_t* data, uint8_t size);
 bool isCircBufferEmpty(CircBuffer* buffer);
 BufferStatus circBufferPush(CircBuffer* buffer, uint8_t data);
 BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* data);
+BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* data, uint8_t length);
+void circBufferClear(CircBuffer* buffer);
 
 #endif
