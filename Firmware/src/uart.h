@@ -1,8 +1,9 @@
-#ifndef SERIAL_H
-#define SERIAL_H
+#ifndef UART_H
+#define UART_H
 
 #include <stdlib.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 #include "config.h"
 
@@ -11,27 +12,35 @@
 #define F_CPU 16000000UL
 #endif
 
+#ifdef __AVR_ATmega2560__
+#define RX_ISR USART0_RX_vect
+#define UDRE_ISR USART0_UDRE_vect
+#else
+#define RX_ISR USART_RX_vect
+#define UDRE_ISR USART_UDRE_vect
+#endif
+
 #define MAX_BUFF_SIZE 32
 
-typedef enum UartMode {
-    Rx = 0,
-    Tx = 1
-};
-
-typedef struct{
+typedef struct {
     uint8_t buffer[MAX_BUFF_SIZE];
     uint8_t size;
     uint8_t index;
 } Buffer;
 
-UartMode uartMode;
+extern Buffer txBuff;
+extern Buffer rxBuff;
 
-Buffer txBuff;
-Buffer rxBuff;
+typedef enum {
+    Rx = 0,
+    Tx = 1
+} UartMode;
 
-uint8_t commandDelimiter = 0xFF;
+extern UartMode uartMode;
+
+extern uint8_t commandDelimiter;
 typedef void (*CommandHandler)(uint8_t* data, uint8_t length);
-CommandHandler commandHandler = NULL;
+extern CommandHandler commandHandler;
 
 void uartBegin(uint16_t baudrate);
 

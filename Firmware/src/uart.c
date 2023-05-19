@@ -1,5 +1,13 @@
 #include "uart.h"
 
+Buffer txBuff;
+Buffer rxBuff;
+
+UartMode uartMode;
+
+uint8_t commandDelimiter;
+CommandHandler commandHandler;
+
 void uartBegin(uint16_t baudrate) {
     // Set the baudrate
     uint16_t ubrr = (F_CPU / (baudrate * 16UL)) - 1;
@@ -24,6 +32,10 @@ void uartBegin(uint16_t baudrate) {
     txBuff.index = 0;
     rxBuff.size = 0;
     rxBuff.index = 0;
+
+    // Setup variables
+    commandDelimiter = 0xFF;
+    commandHandler = NULL;
 }
 
 void setCommandDelimiter(uint8_t delimiter) {
@@ -64,7 +76,7 @@ void uartWrite(uint8_t* data, uint8_t length) {
 }
 
 // USART RX complete
-ISR(USART_RX_vect) {
+ISR(RX_ISR) {
     // Receive one byte and put it in the receive buffer
     uint8_t rcv = rxBuff.buffer[rxBuff.index] = UDR0;
     rxBuff.index++;
@@ -83,7 +95,7 @@ ISR(USART_RX_vect) {
 }
 
 // USART Data Register (UDR0) empty
-ISR(USART_UDRE_vect) {
+ISR(UDRE_ISR) {
     UDR0 = txBuff.buffer[txBuff.index];
     txBuff.index++;
     if (txBuff.index >= txBuff.size) {
