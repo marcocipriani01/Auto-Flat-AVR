@@ -6,15 +6,14 @@
 ////////////////////////////
 // EL PANEL CONFIGURATION //
 ////////////////////////////
-#define EL_PANEL_PIN 3                                  // EL panel MOSFET pin
 #define EL_PANEL_FADE_DELAY 8                           // The smaller the value the faster the panel fades
-#define LOG_SCALE_ENABLE true                           // Log scale (true/false)
-#define EL_PANEL_ON_BOOT false                          // ON at boot
+#define LOG_SCALE false                                  // Log brightness scale (true/false)
+#define EL_PANEL_ON_BOOT false                          // Panel ON at boot
 
 ////////////////////////////
 //  SERVO CONFIGURATION   //
 ////////////////////////////
-#define SERVO_PIN 5                                     // Servo pin
+//#define SERVO_PIN 5                                     // Servo pin
 #ifdef SERVO_PIN
 #define STEP_SIZE 10                                    // Size of one servo step
 
