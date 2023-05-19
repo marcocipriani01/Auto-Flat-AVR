@@ -50,10 +50,8 @@ void uartWrite(uint8_t* data, uint8_t length) {
     if ((length == 0) || (length > MAX_BUFF_SIZE)) return;
     // Copy data to buffer
     for (uint8_t i = 0; i < length; i++) {
-        txBuff.buffer[i] = data[i];
+        txBuff.buffer[txBuff.size++] = data[i];
     }
-    txBuff.size = length;
-    txBuff.index = 0;
 
     // Switch to TX mode
     setTxMode();
@@ -70,14 +68,18 @@ ISR(USART_RX_vect) {
     // Receive one byte and put it in the receive buffer
     uint8_t rcv = rxBuff.buffer[rxBuff.index] = UDR0;
     rxBuff.index++;
+    rxBuff.size++;
     if (rxBuff.index >= MAX_BUFF_SIZE) {
         // Buffer overflow
         rxBuff.index = 0;
     }
 
     // Call the command handler if necessary
-    if ((commandDelimiter != 0xFF) && (rcv == commandDelimiter) && (commandHandler != NULL))
-        (*commandHandler)(rxBuff.buffer, rxBuff.index);
+    if ((commandDelimiter != 0xFF) && (rcv == commandDelimiter) && (commandHandler != NULL)) {
+        (*commandHandler)(rxBuff.buffer, rxBuff.size);
+        rxBuff.index = 0;
+        rxBuff.size = 0;
+    }
 }
 
 // USART Data Register (UDR0) empty
