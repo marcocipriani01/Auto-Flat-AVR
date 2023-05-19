@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <avr/io.h>
+#include <avr/cpufunc.h>
 #include <avr/interrupt.h>
 
 #include "circular_buffer.h"
@@ -38,7 +39,7 @@ void setCommandHandler(CommandHandler handler);
 void setRxMode();
 void setTxMode();
 
-void uartWrite(uint8_t* data, uint8_t length);
+void uartWrite(uint8_t* data, uint16_t length);
 void uartPrint(const char* data);
 void uartPrintln(const char* data);
 void uartPrintInt(int val);

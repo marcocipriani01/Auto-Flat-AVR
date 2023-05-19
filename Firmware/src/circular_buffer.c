@@ -1,6 +1,6 @@
 #include "circular_buffer.h"
 
-void circBufferInit(CircBuffer* buffer, uint8_t* data, uint8_t size) {
+void circBufferInit(CircBuffer* buffer, uint8_t* data, uint16_t size) {
     buffer->data = data;
     buffer->head = 0;
     buffer->tail = 0;
@@ -13,7 +13,7 @@ bool isCircBufferEmpty(CircBuffer* buffer) {
 
 BufferStatus circBufferPush(CircBuffer* buffer, uint8_t data) {
     // `next` is where head will point to after the push
-    uint8_t next = buffer->head + 1;
+    uint16_t next = buffer->head + 1;
     if (next >= buffer->size)
         next = 0;
     // If head + 1 == tail, the circular buffer is full
@@ -30,7 +30,7 @@ BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* data) {
     if (buffer->head == buffer->tail)
         return BUFFER_EMPTY;
     // `next` is where head will point to after the pop
-    uint8_t next = buffer->tail + 1;
+    uint16_t next = buffer->tail + 1;
     if(next >= buffer->size)
         next = 0;
 
@@ -39,7 +39,7 @@ BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* data) {
     return BUFFER_OK;
 }
 
-BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* data, uint8_t length) {
+BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* data, uint16_t length) {
     uint8_t b;
     while (circBufferPop(buffer, &b) == BUFFER_OK) {
         *(data++) = b;

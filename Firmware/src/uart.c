@@ -48,15 +48,15 @@ inline void setTxMode() {
     UCSR0B = (UCSR0B & (~(1 << RXCIE0))) | _BV(UDRIE0);
 }
 
-void uartWrite(uint8_t* data, uint8_t length) {
+void uartWrite(uint8_t* data, uint16_t length) {
     if (length == 0) return;
     // Copy data to buffer
-    cli();
-    for (uint8_t i = 0; i < length; i++) {
-        if (circBufferPush(&txBuff, data[i]) == BUFFER_FULL)
-            break;
+    for (uint16_t i = 0; i < length; i++) {
+        // If the buffer is full, wait until there is space to avoid loss of data
+        while (circBufferPush(&txBuff, data[i]) == BUFFER_FULL) {
+            _NOP();
+        }
     }
-    sei();
 
     // Switch to TX mode
     setTxMode();
@@ -71,12 +71,12 @@ void uartWrite(uint8_t* data, uint8_t length) {
 void uartPrint(const char* data) {
     // Copy data to buffer
     char c;
-    cli();
     while ((c = *(data++)) != '\0') {
-        if (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
-            break;
+        // If the buffer is full, wait until there is space to avoid loss of data
+        while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL) {
+            _NOP();
+        }
     }
-    sei();
 
     // Switch to TX mode
     setTxMode();
@@ -91,13 +91,14 @@ void uartPrint(const char* data) {
 void uartPrintln(const char* data) {
     // Copy data to buffer
     char c;
-    cli();
     while ((c = *(data++)) != '\0') {
-        if (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
-            break;
+        while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL) {
+            _NOP();
+        }
     }
-    circBufferPush(&txBuff, (uint8_t) '\n');
-    sei();
+    while (circBufferPush(&txBuff, (uint8_t) '\n') == BUFFER_FULL) {
+        _NOP();
+    }
 
     // Switch to TX mode
     setTxMode();
