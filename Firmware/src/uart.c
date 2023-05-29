@@ -57,9 +57,8 @@ void uartWrite(uint8_t* data, uint16_t length) {
     // Copy data to buffer
     for (uint16_t i = 0; i < length; i++) {
         // If the buffer is full, wait until there is space to avoid loss of data
-        while (circBufferPush(&txBuff, data[i]) == BUFFER_FULL) {
+        while (circBufferPush(&txBuff, data[i]) == BUFFER_FULL)
             _NOP();
-        }
     }
     setTxMode();
 }
@@ -69,9 +68,8 @@ void print(const char* data) {
     char c;
     while ((c = *(data++)) != 0) {
         // If the buffer is full, wait until there is space to avoid loss of data
-        while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL) {
+        while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
             _NOP();
-        }
     }
     setTxMode();
 }
@@ -80,13 +78,11 @@ void println(const char* data) {
     // Copy data to buffer
     char c;
     while ((c = *(data++)) != 0) {
-        while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL) {
+        while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
             _NOP();
-        }
     }
-    while (circBufferPush(&txBuff, (uint8_t) '\n') == BUFFER_FULL) {
+    while (circBufferPush(&txBuff, (uint8_t) '\n') == BUFFER_FULL)
         _NOP();
-    }
     setTxMode();
 }
 

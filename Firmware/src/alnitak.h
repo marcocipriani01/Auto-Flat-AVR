@@ -14,9 +14,8 @@
 
 typedef enum {
     MOVING = 0,
-    CLOSED,
-    OPEN,
-    TIMED_OUT
+    CLOSED = 1,
+    OPEN = 2
 } ShutterStatus;
 
 #else
