@@ -9,11 +9,6 @@
 
 #include "circular_buffer.h"
 
-#ifndef F_CPU
-#warning "F_CPU not defined, using 16MHz by default"
-#define F_CPU 16000000UL
-#endif
-
 #ifdef __AVR_ATmega2560__
 #define RX_ISR USART0_RX_vect
 #define UDRE_ISR USART0_UDRE_vect

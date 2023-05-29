@@ -3,38 +3,40 @@
 
 #define BAUDRATE 9600
 
+#define FIRMWARE_VERSION 1
+
 ////////////////////////////
 // EL PANEL CONFIGURATION //
 ////////////////////////////
-#define EL_PANEL_FADE_DELAY 8                           // The smaller the value the faster the panel fades
-#define LOG_SCALE false                                  // Log brightness scale (true/false)
-#define EL_PANEL_ON_BOOT false                          // Panel ON at boot
+#define EL_PANEL_FADE_DELAY 8               // The smaller the value the faster the panel fades
+#define EL_PANEL_LOG_SCALE true             // Log brightness scale (true/false)
+#define EL_PANEL_ON_BOOT false              // Panel ON at boot
 
 ////////////////////////////
 //  SERVO CONFIGURATION   //
 ////////////////////////////
-//#define SERVO_PIN 5                                     // Servo pin
-#ifdef SERVO_PIN
-#define STEP_SIZE 10                                    // Size of one servo step
+#define SERVO_ENABLE true                   // Enable servo motor
+#if SERVO_ENABLE == true
+#define SERVO_STEP_SIZE 10                  // Size of one servo step
 
-#define CLOSED_SERVO_15deg 2400                         // Raw servo value for +15°
-#define CLOSED_SERVO_m15deg 2550                        // Raw servo value for -15°
-#define CLOSED_SERVO_DEFAULT 2510                       // Default value
+#define SERVO_CLOSED_15deg 2400             // Raw servo value for +15°
+#define SERVO_CLOSED_m15deg 2550            // Raw servo value for -15°
+#define SERVO_CLOSED_DEFAULT 2510           // Default value
 
-#define OPEN_SERVO_290deg 400                           // Raw servo value for +290°
-#define OPEN_SERVO_170deg 1300                          // Raw servo value for +170°
-#define OPEN_SERVO_DEFAULT 550                          // Default value
+#define SERVO_OPEN_290deg 400               // Raw servo value for +290°
+#define SERVO_OPEN_170deg 1300              // Raw servo value for +170°
+#define SERVO_OPEN_DEFAULT 550              // Default value
 
-#define SERVO_DELAY_MIN 1000                            // Delay for the maximum speed
-#define SERVO_DELAY_MAX 16300                           // Delay for the minimum speed
-#define SERVO_DELAY_DEFAULT 7000                        // Default delay
+#define SERVO_DELAY_MIN 1                   // Delay for the maximum speed
+#define SERVO_DELAY_MAX 16                  // Delay for the minimum speed
+#define SERVO_DELAY_DEFAULT 7               // Default delay
 #endif
 
 ////////////////////////////
 // ENCODER CONFIGURATION  //
 ////////////////////////////
-#define KNOB_CONTROL false
-#if KNOB_CONTROL == true
+#define ENCODER_ENABLE false
+#if ENCODER_ENABLE == true
 #define ENCODER_CLK_PIN 9
 #define ENCODER_DT_PIN 10
 #define ENCODER_SW_PIN 8

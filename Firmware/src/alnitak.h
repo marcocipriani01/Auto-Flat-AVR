@@ -9,7 +9,7 @@
 #define FLAT_MAN 19
 #define FLIP_FLAT 99
 
-#ifdef SERVO_PIN
+#if SERVO_ENABLE == true
 #define DEVICE_ID FLIP_FLAT
 
 typedef enum {
