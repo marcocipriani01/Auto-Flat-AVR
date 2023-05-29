@@ -20,7 +20,7 @@ typedef struct {
 
 extern Settings settings;
 
-uint8_t calcChecksum();
+uint8_t calcSettingsChecksum();
 void loadSettings();
 void saveSettings();
 
