@@ -47,7 +47,7 @@ int main(void) {
 
     while (1) {
         char temp[120];
-        sprintf(temp, "This is a very long text to the the circular buffer of the UART library! Very very long text indeed.\n");
+        sprintf(temp, "This is a very long text to test the circular buffer of the UART library! Very very long text indeed.\n");
         print(temp);
         _delay_ms(1000);
     }
