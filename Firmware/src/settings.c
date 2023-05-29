@@ -23,8 +23,8 @@ void loadSettings() {
         settings.servoDelay = constrain(settings.servoDelay, SERVO_DELAY_MIN, SERVO_DELAY_MAX);
         settings.closedVal = constrain(settings.closedVal, SERVO_CLOSED_MAX, SERVO_CLOSED_MIN);
         settings.openVal = constrain(settings.openVal, SERVO_OPEN_MAX, SERVO_OPEN_MIN);
-        if (!((settings.coverStatus == CLOSED) || (settings.coverStatus == OPEN)))
-            settings.coverStatus = CLOSED;
+        if (!((settings.shutterStatus == CLOSED) || (settings.shutterStatus == OPEN)))
+            settings.shutterStatus = CLOSED;
 #endif
     } else {
         // Checksum doesn't match, load default settings
@@ -32,7 +32,7 @@ void loadSettings() {
         settings.servoDelay = SERVO_DELAY_DEFAULT;
         settings.openVal = SERVO_OPEN_DEFAULT;
         settings.closedVal = SERVO_CLOSED_DEFAULT;
-        settings.coverStatus = CLOSED;
+        settings.shutterStatus = CLOSED;
 #endif
         saveSettings();
     }

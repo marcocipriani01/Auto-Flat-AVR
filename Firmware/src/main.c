@@ -9,9 +9,7 @@ uint8_t targetBrightness = 0;
 uint8_t currentBrightness = 0;
 
 #if SERVO_ENABLE == true
-uint8_t motorStatus = STOPPED;
-uint8_t coverStatus = CLOSED;
-uint8_t motorDirection = NONE;
+ShutterStatus shutterStatus = CLOSED;
 uint16_t targetServoVal = 0;
 uint16_t currentServoVal = 0;
 #endif
@@ -22,10 +20,6 @@ int main(void) {
     setCommandDelimiter('\r');
     setCommandHandler(onCommandReceived);
 
-    // Enable global interrupts and sleep mode
-    set_sleep_mode(SLEEP_MODE_IDLE);
-    sei();
-
     // Load settings from EEPROM
     loadSettings();
 
@@ -33,17 +27,21 @@ int main(void) {
     TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM20);    // Phase-Correct PWM mode, non-inverting, timer 2
     TCCR2B = _BV(CS21) | _BV(CS20);                     // Prescaler 32, 980Hz
     DDRD |= _BV(PD3);                                   // Set pin PD3 as output
-    OCR2B = settings.brightness;                        // Load brightness from settings
+    setPanelBrigthness(settings.brightness);            // Load brightness from settings
 
     // Servo motor
-    if (settings.coverStatus == OPEN) {
+    if (settings.shutterStatus == OPEN) {
         initServo(settings.openVal);
         currentServoVal = targetServoVal = settings.openVal;
-        coverStatus = OPEN;
+        shutterStatus = OPEN;
     } else {
         initServo(settings.closedVal);
         currentServoVal = targetServoVal = settings.closedVal;
     }
+
+    // Enable global interrupts and sleep mode
+    set_sleep_mode(SLEEP_MODE_IDLE);
+    sei();
 
     while (1) {
         //bool canSleep = true;
@@ -51,41 +49,35 @@ int main(void) {
 
         // EL panel fade effect
         if (currentBrightness > targetBrightness)
-            OCR2B = --currentBrightness;
+            setPanelBrigthness(--currentBrightness);
         else if (currentBrightness < targetBrightness)
-            OCR2B = ++currentBrightness;
+            setPanelBrigthness(++currentBrightness);
         else
             canSleep &= true;
 
-        if ((currentServoVal > targetServoVal) && (motorDirection == OPENING)) {
-            motorStatus = RUNNING;
-            coverStatus = NEITHER_OPEN_NOR_CLOSED;
+        if (currentServoVal > targetServoVal) {
+            shutterStatus = MOVING;
             currentServoVal -= SERVO_STEP_SIZE;
             setServoPulseWidth(currentServoVal);
             if (currentServoVal <= targetServoVal) {
-                motorStatus = STOPPED;
-                motorDirection = NONE;
-                coverStatus = OPEN;
-                settings.coverStatus = OPEN;
+                currentServoVal = targetServoVal;
+                shutterStatus = OPEN;
+                settings.shutterStatus = OPEN;
                 saveSettings();
             }
             _delay_ms(settings.servoDelay);
-        } else if ((currentServoVal < targetServoVal) && (motorDirection == CLOSING)) {
-            motorStatus = RUNNING;
-            coverStatus = NEITHER_OPEN_NOR_CLOSED;
+        } else if (currentServoVal < targetServoVal) {
+            shutterStatus = MOVING;
             currentServoVal += SERVO_STEP_SIZE;
             setServoPulseWidth(currentServoVal);
             if (currentServoVal >= targetServoVal) {
-                motorStatus = STOPPED;
-                motorDirection = NONE;
-                coverStatus = CLOSED;
-                settings.coverStatus = CLOSED;
+                currentServoVal = targetServoVal;
+                shutterStatus = CLOSED;
+                settings.shutterStatus = CLOSED;
                 saveSettings();
                 if (lightOn) targetBrightness = brightness;
             }
             _delay_ms(settings.servoDelay);
-        } else {
-            motorDirection = NONE;
         }
 
         // Enter sleep mode
@@ -103,11 +95,11 @@ inline void setPanelBrigthness(uint8_t brightness) {
 
 #if SERVO_ENABLE == true
 void setShutter(ShutterStatus val) {
-    if ((val == OPEN) && (coverStatus != OPEN)) {
-        motorDirection = OPENING;
+    if ((val == OPEN) && (shutterStatus != OPEN)) {
+        shutterStatus = MOVING;
         targetServoVal = settings.openVal;
-    } else if ((val == CLOSED) && (coverStatus != CLOSED)) {
-        motorDirection = CLOSING;
+    } else if ((val == CLOSED) && (shutterStatus != CLOSED)) {
+        shutterStatus = MOVING;
         targetServoVal = settings.closedVal;
     }
 }
@@ -175,7 +167,7 @@ void onCommandReceived(CircBuffer* buffer) {
                 print(temp);
                 lightOn = true;
 #if SERVO_ENABLE == true
-                if (coverStatus == CLOSED)
+                if (shutterStatus == CLOSED)
                     targetBrightness = brightness;
 #else
                 targetBrightness = brightness;
@@ -215,7 +207,7 @@ void onCommandReceived(CircBuffer* buffer) {
                 brightness = atoi(data);
 #endif
 #if SERVO_ENABLE == true
-                if (lightOn && (coverStatus == CLOSED))
+                if (lightOn && (shutterStatus == CLOSED))
 #else
                 if (lightOn)
 #endif
@@ -249,7 +241,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'S': {
 #if SERVO_ENABLE == true
-                sprintf(temp, "*S%d%d%d%d\n", DEVICE_ID, motorStatus, lightOn, coverStatus);
+                sprintf(temp, "*S%d%d%d%d\n", DEVICE_ID, (shutterStatus == MOVING), lightOn, shutterStatus);
 #else
                 sprintf(temp, "*S%d0%d0\n", DEVICE_ID, lightOn);
 #endif
@@ -268,9 +260,6 @@ void onCommandReceived(CircBuffer* buffer) {
                 print(temp);
                 break;
             }
-
-            default:
-                break;
         }
     }
 }

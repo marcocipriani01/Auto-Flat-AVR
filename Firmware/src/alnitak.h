@@ -13,22 +13,11 @@
 #define DEVICE_ID FLIP_FLAT
 
 typedef enum {
-    NEITHER_OPEN_NOR_CLOSED = 0,
+    MOVING = 0,
     CLOSED,
     OPEN,
     TIMED_OUT
 } ShutterStatus;
-
-typedef enum {
-    OPENING = 0,
-    CLOSING,
-    NONE
-} MotorDirection;
-
-typedef enum {
-    STOPPED = 0,
-    RUNNING
-} MotorStatus;
 
 #else
 #define DEVICE_ID FLAT_MAN

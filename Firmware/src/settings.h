@@ -14,7 +14,7 @@ typedef struct {
     uint16_t servoDelay;
     uint16_t openVal;
     uint16_t closedVal;
-    ShutterStatus coverStatus;
+    ShutterStatus shutterStatus;
 #endif
 } Settings;
 
