@@ -129,7 +129,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'P': {
                 sprintf(temp, "*P%dOOO\n", DEVICE_ID);
-                uartPrint(temp);
+                print(temp);
                 break;
             }
 
@@ -142,7 +142,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'O': {
                 sprintf(temp, "*O%dOOO\n", DEVICE_ID);
-                uartPrint(temp);
+                print(temp);
                 setShutter(OPEN);
                 targetBrightness = 0;
                 currentBrightness = 0;
@@ -158,7 +158,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'C': {
                 sprintf(temp, "*C%dOOO\n", DEVICE_ID);
-                uartPrint(temp);
+                print(temp);
                 setShutter(CLOSED);
                 break;
             }
@@ -172,7 +172,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'L': {
                 sprintf(temp, "*L%dOOO\n", DEVICE_ID);
-                uartPrint(temp);
+                print(temp);
                 lightOn = true;
 #if SERVO_ENABLE == true
                 if (coverStatus == CLOSED)
@@ -191,7 +191,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'D': {
                 sprintf(temp, "*D%dOOO\n", DEVICE_ID);
-                uartPrint(temp);
+                print(temp);
                 lightOn = false;
                 targetBrightness = 0;
                 break;
@@ -221,7 +221,7 @@ void onCommandReceived(CircBuffer* buffer) {
 #endif
                     targetBrightness = brightness;
                 sprintf(temp, "*B%d%03d\n", DEVICE_ID, brightness);
-                uartPrint(temp);
+                print(temp);
                 break;
             }
 
@@ -234,7 +234,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'J': {
                 sprintf(temp, "*J%d%03d\n", DEVICE_ID, targetBrightness);
-                uartPrint(temp);
+                print(temp);
                 break;
             }
 
@@ -253,7 +253,7 @@ void onCommandReceived(CircBuffer* buffer) {
 #else
                 sprintf(temp, "*S%d0%d0\n", DEVICE_ID, lightOn);
 #endif
-                uartPrint(temp);
+                print(temp);
                 break;
             }
 
@@ -265,7 +265,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'V': {
                 sprintf(temp, "*V%d%3d\n", DEVICE_ID, FIRMWARE_VERSION);
-                uartPrint(temp);
+                print(temp);
                 break;
             }
 

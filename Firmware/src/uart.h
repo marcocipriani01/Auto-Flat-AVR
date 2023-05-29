@@ -35,9 +35,9 @@ void setRxMode();
 void setTxMode();
 
 void uartWrite(uint8_t* data, uint16_t length);
-void uartPrint(const char* data);
-void uartPrintln(const char* data);
-void uartPrintInt(int val);
-void uartPrintlnInt(int val);
+void print(const char* data);
+void println(const char* data);
+void printInt(int val);
+void printlnInt(int val);
 
 #endif
