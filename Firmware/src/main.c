@@ -24,7 +24,7 @@ int main(void) {
     set_sleep_mode(SLEEP_MODE_IDLE);
     sei();
 
-    // PWM
+    // EL panel brightness adjustment, PWM on pin 3
     DDRD |= _BV(PD3);
     timer2init();
 
