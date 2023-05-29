@@ -28,6 +28,18 @@ int main(void) {
     DDRD |= _BV(PD3);
     timer2init();
 
+    // Servo motor
+    initServo(550);
+
+    uint16_t pulseWidth = 550;
+    while (1) {
+        pulseWidth += 10;
+        if (pulseWidth > 2500) pulseWidth = 550;
+        setServoPulseWidth(pulseWidth);
+        uartPrintlnInt(servoCounter);
+        _delay_ms(50);
+    }
+
     while (1) {
         bool canSleep = true;
 

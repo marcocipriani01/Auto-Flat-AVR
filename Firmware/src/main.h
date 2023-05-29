@@ -11,6 +11,7 @@
 #include <avr/sleep.h>
 
 #include "uart.h"
+#include "servo.h"
 #include "utils.h"
 #include "config.h"
 #include "alnitak.h"
