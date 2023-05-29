@@ -71,7 +71,7 @@ void uartWrite(uint8_t* data, uint16_t length) {
 void uartPrint(const char* data) {
     // Copy data to buffer
     char c;
-    while ((c = *(data++)) != '\0') {
+    while ((c = *(data++)) != 0) {
         // If the buffer is full, wait until there is space to avoid loss of data
         while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL) {
             _NOP();
@@ -91,7 +91,7 @@ void uartPrint(const char* data) {
 void uartPrintln(const char* data) {
     // Copy data to buffer
     char c;
-    while ((c = *(data++)) != '\0') {
+    while ((c = *(data++)) != 0) {
         while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL) {
             _NOP();
         }
