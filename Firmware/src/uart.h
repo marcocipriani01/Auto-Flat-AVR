@@ -33,6 +33,7 @@ void setCommandHandler(CommandHandler handler);
 
 void setRxMode();
 void setTxMode();
+void maybeSendNextByte();
 
 void uartWrite(uint8_t* data, uint16_t length);
 void print(const char* data);

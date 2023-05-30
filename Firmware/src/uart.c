@@ -41,9 +41,13 @@ inline void setRxMode() {
     UCSR0B = (UCSR0B & (~(1 << UDRIE0))) | _BV(RXCIE0);
 }
 
-void setTxMode() {
+inline void setTxMode() {
     // Disable RX interrupt, enable UDR0 interrupt
     UCSR0B = (UCSR0B & (~(1 << RXCIE0))) | _BV(UDRIE0);
+}
+
+void maybeSendNextByte() {
+    setTxMode();
     // If the data register is empty, transmit the first byte
     if (UCSR0A & (1 << UDRE0)) {
         uint8_t b;
@@ -54,36 +58,36 @@ void setTxMode() {
 
 void uartWrite(uint8_t* data, uint16_t length) {
     if (length == 0) return;
+    setTxMode();
     // Copy data to buffer
     for (uint16_t i = 0; i < length; i++) {
         // If the buffer is full, wait until there is space to avoid loss of data
         while (circBufferPush(&txBuff, data[i]) == BUFFER_FULL)
-            setTxMode();
+            maybeSendNextByte();
     }
-    setTxMode();
 }
 
 void print(const char* data) {
     // Copy data to buffer
+    setTxMode();
     char c;
     while ((c = *(data++)) != 0) {
         // If the buffer is full, wait until there is space to avoid loss of data
         while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
-            setTxMode();
+            maybeSendNextByte();
     }
-    setTxMode();
 }
 
 void println(const char* data) {
     // Copy data to buffer
+    setTxMode();
     char c;
     while ((c = *(data++)) != 0) {
         while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
-            setTxMode();
+            maybeSendNextByte();
     }
     while (circBufferPush(&txBuff, (uint8_t) '\n') == BUFFER_FULL)
-        setTxMode();
-    setTxMode();
+        maybeSendNextByte();
 }
 
 void printInt(int val) {
