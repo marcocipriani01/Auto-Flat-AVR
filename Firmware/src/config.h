@@ -17,8 +17,6 @@
 ////////////////////////////
 #define SERVO_ENABLE true                   // Enable servo motor
 #if SERVO_ENABLE == true
-#define SERVO_STEP_SIZE 10                  // Size of one servo step in μs
-
 #define SERVO_CLOSED_MIN 2400               // Servo pulse width for +15° angle
 #define SERVO_CLOSED_MAX 2550               // Servo pulse width for -15° angle
 #define SERVO_CLOSED_DEFAULT 2510           // Default closed servo pulse width
@@ -27,9 +25,9 @@
 #define SERVO_OPEN_MAX 1300                 // Servo pulse width for +170° angle
 #define SERVO_OPEN_DEFAULT 550              // Default value
 
-#define SERVO_DELAY_MIN 1                   // Delay for the maximum speed
-#define SERVO_DELAY_MAX 16                  // Delay for the minimum speed
-#define SERVO_DELAY_DEFAULT 7               // Default open servo pulse width
+#define SERVO_STEP_MIN 5                   // Minimum size of one servo step, in μs
+#define SERVO_STEP_MAX 50                  // Maximum size of one servo step, in μs
+#define SERVO_STEP_DEFAULT 20              // Default size of one servo step, in μs
 #endif
 
 ////////////////////////////

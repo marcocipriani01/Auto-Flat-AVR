@@ -46,13 +46,6 @@ extern volatile uint16_t currentServoVal;
 extern volatile uint16_t targetServoVal;
 
 /**
- * Counts the number of timer ticks since the last servo value change.
- * This variable is used by the ISR to determine when to change the servo value,
- * to interpolate between the current and target values.
-*/
-extern volatile uint16_t servoInterpolationTicks;
-
-/**
  * The current status of the shutter (MOVING, CLOSED, OPEN).
 */
 extern volatile ShutterStatus shutterStatus;

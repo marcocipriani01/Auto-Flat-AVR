@@ -20,7 +20,7 @@ void loadSettings() {
     if (calcSettingsChecksum() == eeprom_read_byte((uint8_t*) i)) {
         // Checksum matches, but make sure data is valid
 #if SERVO_ENABLE == true
-        settings.servoDelay = constrain(settings.servoDelay, SERVO_DELAY_MIN, SERVO_DELAY_MAX);
+        settings.servoStep = constrain(settings.servoStep, SERVO_STEP_MIN, SERVO_STEP_MAX);
         settings.closedVal = constrain(settings.closedVal, SERVO_CLOSED_MIN, SERVO_CLOSED_MAX);
         settings.openVal = constrain(settings.openVal, SERVO_OPEN_MIN, SERVO_OPEN_MAX);
         if (!((settings.shutterStatus == CLOSED) || (settings.shutterStatus == OPEN)))
@@ -29,7 +29,7 @@ void loadSettings() {
     } else {
         // Checksum doesn't match, load default settings
 #if SERVO_ENABLE == true
-        settings.servoDelay = SERVO_DELAY_DEFAULT;
+        settings.servoStep = SERVO_STEP_DEFAULT;
         settings.openVal = SERVO_OPEN_DEFAULT;
         settings.closedVal = SERVO_CLOSED_DEFAULT;
         settings.shutterStatus = CLOSED;
@@ -43,7 +43,7 @@ void loadSettings() {
 }
 
 void saveSettings() {
-    settings.servoDelay = constrain(settings.servoDelay, SERVO_DELAY_MIN, SERVO_DELAY_MAX);
+    settings.servoStep = constrain(settings.servoStep, SERVO_STEP_MIN, SERVO_STEP_MAX);
     settings.closedVal = constrain(settings.closedVal, SERVO_CLOSED_MIN, SERVO_CLOSED_MAX);
     settings.openVal = constrain(settings.openVal, SERVO_OPEN_MIN, SERVO_OPEN_MAX);
     uint8_t* src = (uint8_t*)&settings;

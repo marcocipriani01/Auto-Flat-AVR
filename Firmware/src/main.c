@@ -5,9 +5,6 @@ uint8_t brightness = 255;           // The brightness value of the panel as requ
 uint8_t targetBrightness = 0;       // The target brightness value (used for the fade effect)
 uint8_t currentBrightness = 0;      // The current brightness value (used for the fade effect)
 
-#if SERVO_ENABLE == true
-ShutterStatus lastShutterStatus = CLOSED;
-#endif
 
 int main(void) {
     // UART begin
@@ -24,7 +21,7 @@ int main(void) {
     setPanelBrigthness(settings.brightness);            // Load brightness from settings
 
     // Servo motor
-    initServo(lastShutterStatus = settings.shutterStatus);
+    initServo(settings.shutterStatus);
 
     // Enable global interrupts and sleep mode
     set_sleep_mode(SLEEP_MODE_IDLE);
@@ -32,7 +29,7 @@ int main(void) {
 
     while (1) {
         // Check if the shutter status has changed, then save it to EEPROM
-        if (lastShutterStatus != shutterStatus) {
+        if ((shutterStatus != MOVING) && (shutterStatus != settings.shutterStatus)) {
             if (shutterStatus == CLOSED) {
                 settings.shutterStatus = shutterStatus;
                 saveSettings();
@@ -42,7 +39,6 @@ int main(void) {
                 settings.shutterStatus = shutterStatus;
                 saveSettings();
             }
-            lastShutterStatus = shutterStatus;
         }
 
         // EL panel fade effect
@@ -261,8 +257,8 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'Z': {
                 if (circBufferPopArray(buffer, (uint8_t*) temp, 2) == BUFFER_EMPTY) break;
-                settings.servoDelay = linearMap(atoi(temp), 0, 10, SERVO_DELAY_MAX, SERVO_DELAY_MIN);
-                sprintf(temp, "*Z%d%02d\n", DEVICE_ID, settings.servoDelay);
+                settings.servoStep = linearMap(atoi(temp), 0, 10, SERVO_STEP_MIN, SERVO_STEP_MAX);
+                sprintf(temp, "*Z%d%02d\n", DEVICE_ID, settings.servoStep);
                 print(temp);
                 break;
             }
@@ -296,7 +292,7 @@ void onCommandReceived(CircBuffer* buffer) {
 #if SERVO_ENABLE == true
                 uint8_t openVal = linearMap(settings.openVal, SERVO_OPEN_MAX, SERVO_OPEN_MIN, 0, 100),
                     closedVal = linearMap(settings.closedVal, SERVO_CLOSED_MAX, SERVO_CLOSED_MIN, 0, 100),
-                    servoDelay = linearMap(settings.servoDelay, SERVO_DELAY_MAX, SERVO_DELAY_MIN, 0, 10),
+                    servoDelay = linearMap(settings.servoStep, SERVO_STEP_MIN, SERVO_STEP_MAX, 0, 10),
                     shutterVal = (uint8_t) shutterStatus;
 #else
                 uint8_t openVal = 0,

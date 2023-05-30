@@ -3,7 +3,6 @@
 volatile bool servoHigh;
 volatile uint16_t currentServoVal;
 volatile uint16_t targetServoVal;
-volatile uint16_t servoInterpolationTicks;
 volatile ShutterStatus shutterStatus = CLOSED;
 
 void initServo(ShutterStatus initialStatus) {    
@@ -17,7 +16,6 @@ void initServo(ShutterStatus initialStatus) {
     DDRD |= _BV(PD5);                  // Set PD5 as output
     uint16_t pulseWidth = (initialStatus == OPEN) ? settings.openVal : settings.closedVal;
     currentServoVal = targetServoVal = us_TO_TICKS(pulseWidth);
-    servoInterpolationTicks = 0;
 }
 
 void setShutter(ShutterStatus val) {
@@ -37,22 +35,18 @@ ISR(TIMER1_COMPA_vect) {
         OCR1A = 0xFFFF;
         TCNT1 = 0;
     } else {
-        servoInterpolationTicks++;
-        if (servoInterpolationTicks >= (us_TO_TICKS(settings.servoDelay) / 2)) {
-            if (currentServoVal > targetServoVal) {
-                currentServoVal -= us_TO_TICKS(SERVO_STEP_SIZE);
-                if (currentServoVal <= targetServoVal) {
-                    currentServoVal = targetServoVal;
-                    shutterStatus = OPEN;
-                }
-            } else if (currentServoVal < targetServoVal) {
-                currentServoVal += us_TO_TICKS(SERVO_STEP_SIZE);
-                if (currentServoVal >= targetServoVal) {
-                    currentServoVal = targetServoVal;
-                    shutterStatus = CLOSED;
-                }
+        if (currentServoVal > targetServoVal) {
+            currentServoVal -= us_TO_TICKS(settings.servoStep);
+            if (currentServoVal <= targetServoVal) {
+                currentServoVal = targetServoVal;
+                shutterStatus = OPEN;
             }
-            servoInterpolationTicks = 0;
+        } else if (currentServoVal < targetServoVal) {
+            currentServoVal += us_TO_TICKS(settings.servoStep);
+            if (currentServoVal >= targetServoVal) {
+                currentServoVal = targetServoVal;
+                shutterStatus = CLOSED;
+            }
         }
         
         servoHigh = true;

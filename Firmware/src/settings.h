@@ -11,7 +11,7 @@
 typedef struct {
     uint8_t brightness;
 #if SERVO_ENABLE == true
-    uint16_t servoDelay;
+    uint16_t servoStep;
     uint16_t openVal;
     uint16_t closedVal;
     ShutterStatus shutterStatus;
