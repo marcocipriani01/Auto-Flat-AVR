@@ -107,7 +107,7 @@ void onCommandReceived(CircBuffer* buffer) {
     while (circBufferPop(buffer, &b) != BUFFER_EMPTY) {
         if (b != '>') continue;
         if (circBufferPop(buffer, &b) == BUFFER_EMPTY) return;
-        char temp[20];
+        char temp[20] = {};
 
         switch ((char) b) {
             /*
@@ -197,10 +197,9 @@ void onCommandReceived(CircBuffer* buffer) {
             case 'B': {
                 if (circBufferPopArray(buffer, (uint8_t*) temp, 3) == BUFFER_EMPTY) return;
 #if EL_PANEL_LOG_SCALE == true
-                brightness = (int) round(exp(log(256.0) * (((double) atoi(temp)) / 255.0)) - 1.0);
-                brightness = constrain(brightness, 0, 255);
+                brightness = constrain((int) round(exp(log(256.0) * (((double) atoi(temp)) / 255.0)) - 1.0), 0, 255);
 #else
-                brightness = atoi(temp);
+                brightness = constrain(atoi(temp), 0, 255);
 #endif
 #if SERVO_ENABLE == true
                 if (lightOn && (shutterStatus == CLOSED))
@@ -259,7 +258,7 @@ void onCommandReceived(CircBuffer* buffer) {
 
 #if SERVO_ENABLE == true
             /*
-             *  Get the servo open value (unofficial command)
+             *  Set the servo open value (unofficial command)
              *  Request: >Qxxx\r
              *      xxx = servo open value, 0-100
              *  Return : *Qiiyyy\n
@@ -275,7 +274,7 @@ void onCommandReceived(CircBuffer* buffer) {
             }
 
             /*
-             *  Get the servo closed value (unofficial command)
+             *  Set the servo closed value (unofficial command)
              *  Request: >Kxxx\r
              *      xxx = servo closed value, 0-100
              *  Return : *Kiiyyy\n
@@ -291,7 +290,7 @@ void onCommandReceived(CircBuffer* buffer) {
             }
 
             /*
-             * Get the servo speed (unofficial command)
+             * Set the servo speed (unofficial command)
              * Request: >Zxxx\r
              *    xxx = servo speed, 0-10
              *  Return : *Qiiyyy\n
