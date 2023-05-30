@@ -30,17 +30,24 @@ int main(void) {
 
     // Servo motor
     if (settings.shutterStatus == OPEN) {
-        initServo(settings.openVal);
+        initServo(settings.openVal, 0.01);
         currentServoVal = targetServoVal = settings.openVal;
         shutterStatus = OPEN;
     } else {
-        initServo(settings.closedVal);
+        initServo(settings.closedVal, 0.01);
         currentServoVal = targetServoVal = settings.closedVal;
     }
 
     // Enable global interrupts and sleep mode
     set_sleep_mode(SLEEP_MODE_IDLE);
     sei();
+
+    while (1) {
+        setServoPulseWidth(SERVO_CLOSED_DEFAULT);
+        _delay_ms(2000);
+        setServoPulseWidth(SERVO_OPEN_DEFAULT);
+        _delay_ms(2000);
+    }
 
     while (1) {
         //bool canSleep = true;
@@ -56,7 +63,7 @@ int main(void) {
 
         if (currentServoVal > targetServoVal) {
             currentServoVal -= SERVO_STEP_SIZE;
-            setServoPulseWidth(currentServoVal);
+            //setServoPulseWidth(currentServoVal);
             if (currentServoVal <= targetServoVal) {
                 currentServoVal = targetServoVal;
                 shutterStatus = OPEN;
@@ -66,7 +73,7 @@ int main(void) {
             _delay_ms(settings.servoDelay);
         } else if (currentServoVal < targetServoVal) {
             currentServoVal += SERVO_STEP_SIZE;
-            setServoPulseWidth(currentServoVal);
+            //setServoPulseWidth(currentServoVal);
             if (currentServoVal >= targetServoVal) {
                 currentServoVal = targetServoVal;
                 shutterStatus = CLOSED;
@@ -191,12 +198,13 @@ void onCommandReceived(CircBuffer* buffer) {
              *  Request: >Bxxx\r
              *      xxx = brightness value from 000-255
              *  Return : *Biiyyy\n
-             *      ii = deviceId
+             *      ii  = deviceId
              *      yyy = value that brightness was set from 000-255
             */
             case 'B': {
                 if (circBufferPopArray(buffer, (uint8_t*) temp, 3) == BUFFER_EMPTY) return;
 #if EL_PANEL_LOG_SCALE == true
+                // Apply a logaritmic scale to the brightness value
                 brightness = constrain((int) round(exp(log(256.0) * (((double) atoi(temp)) / 255.0)) - 1.0), 0, 255);
 #else
                 brightness = constrain(atoi(temp), 0, 255);

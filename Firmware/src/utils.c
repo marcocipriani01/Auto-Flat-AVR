@@ -1,5 +1,9 @@
 #include "utils.h"
 
+int abs(int x) {
+    return (x < 0) ? (-x) : x;
+}
+
 int constrain(int x, int low, int high) {
     return (x < low) ? low : ((x > high) ? high : x);
 }

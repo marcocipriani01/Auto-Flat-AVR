@@ -18,11 +18,13 @@
 #include <avr/sleep.h>
 
 #include "uart.h"
-#include "servo.h"
 #include "utils.h"
 #include "config.h"
 #include "alnitak.h"
 #include "settings.h"
+#if SERVO_ENABLE == true
+#include "servo.h"
+#endif
 
 void setPanelBrigthness(uint8_t brightness);
 

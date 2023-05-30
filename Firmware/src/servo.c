@@ -1,9 +1,11 @@
 #include "servo.h"
 
 volatile bool servoHigh;
-volatile uint16_t servoTicks;
+volatile uint16_t targetServoTicks;
+volatile uint16_t currentServoTicks;
+volatile double servoSmoothFactor;
 
-void initServo(uint16_t pulseWidth) {
+void initServo(uint16_t pulseWidth, double smoothFactor) {
     servoHigh = false;
     TCCR1A = 0;                        // Normal counting mode
     TCCR1B = TIMER1_CLOCK_SOURCE;      // Prescaler 8
@@ -13,10 +15,12 @@ void initServo(uint16_t pulseWidth) {
     TIMSK1 |= _BV(OCIE1A);             // Enable the output compare interrupt
     DDRD |= _BV(PD5);                  // Set PD5 as output
     setServoPulseWidth(pulseWidth);
+    currentServoTicks = targetServoTicks;
+    servoSmoothFactor = smoothFactor;
 }
 
 void setServoPulseWidth(uint16_t pulseWidth) {
-    servoTicks = us_TO_TICKS(pulseWidth);
+    targetServoTicks = us_TO_TICKS(pulseWidth);
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -28,7 +32,11 @@ ISR(TIMER1_COMPA_vect) {
     } else {
         PORTD |= _BV(PD5);
         servoHigh = true;
-        OCR1A = servoTicks;
+        currentServoTicks = (uint16_t) ((currentServoTicks * (1.0 - servoSmoothFactor)) + (targetServoTicks * servoSmoothFactor));
+        if (abs(currentServoTicks - targetServoTicks) < 2) {
+            currentServoTicks = targetServoTicks;
+        }
+        OCR1A = currentServoTicks;
         TCNT1 = 0;
     }
 }

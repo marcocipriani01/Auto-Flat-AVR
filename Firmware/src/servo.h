@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <avr/interrupt.h>
 
+#include "utils.h"
+
 #define SERVO_PRESCALER 8
 #if SERVO_PRESCALER != 1 && SERVO_PRESCALER != 8 && SERVO_PRESCALER != 64 && SERVO_PRESCALER != 256 && SERVO_PRESCALER != 1024
 #error "Invalid prescaler value"
@@ -26,9 +28,11 @@
 #define TICKS_TO_us(ticks) ((ticks * SERVO_PRESCALER) / CLOCKS_PER_us)
 
 extern volatile bool servoHigh;
-extern volatile uint16_t servoTicks;
+extern volatile uint16_t targetServoTicks;
+extern volatile uint16_t currentServoTicks;
+extern volatile double servoSmoothFactor;
 
-void initServo(uint16_t pulseWidth);
+void initServo(uint16_t pulseWidth, double smoothFactor);
 void setServoPulseWidth(uint16_t pulseWidth);
 
 #endif
