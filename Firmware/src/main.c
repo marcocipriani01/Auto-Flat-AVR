@@ -16,9 +16,8 @@ uint16_t currentServoVal = 0;
 
 int main(void) {
     // Serial begin
-    uartBegin(BAUDRATE);
-    setCommandDelimiter('\r');
-    setCommandHandler(onCommandReceived);
+    uartBegin(BAUDRATE, UART_BUFFERS_SIZE);
+    setCommandHandler(onCommandReceived, '\r');
 
     // Load settings from EEPROM
     loadSettings();
@@ -42,16 +41,6 @@ int main(void) {
     // Enable global interrupts and sleep mode
     set_sleep_mode(SLEEP_MODE_IDLE);
     sei();
-
-    _delay_ms(100);
-
-    while (1) {
-        char temp[120];
-        sprintf(temp, "This is a very long text to test the circular buffer of the UART library! Very very long text indeed.\n");
-        print(temp);
-        _delay_ms(1000);
-    }
-    
 
     while (1) {
         //bool canSleep = true;

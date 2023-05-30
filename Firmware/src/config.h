@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #define BAUDRATE 9600
+#define UART_BUFFERS_SIZE 64
 
 #define FIRMWARE_VERSION 1
 

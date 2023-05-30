@@ -6,7 +6,7 @@ CircBuffer rxBuff;
 uint8_t commandDelimiter;
 CommandHandler commandHandler;
 
-void uartBegin(uint16_t baudrate) {
+void uartBegin(uint16_t baudrate, uint16_t buffersSize) {
     // Set the baudrate
     uint16_t ubrr = (F_CPU / (baudrate * 16UL)) - 1;
     UBRR0L = (uint8_t) ubrr;
@@ -20,34 +20,33 @@ void uartBegin(uint16_t baudrate) {
 
     // Initialize buffers
     // Warning: malloc() is used here, so the buffers must be freed if the UART is disabled
-    circBufferInit(&txBuff, (uint8_t*) malloc(MAX_BUFF_SIZE), MAX_BUFF_SIZE);
-    circBufferInit(&rxBuff, (uint8_t*) malloc(MAX_BUFF_SIZE), MAX_BUFF_SIZE);
+    circBufferInit(&txBuff, (uint8_t*) malloc(buffersSize), buffersSize);
+    circBufferInit(&rxBuff, (uint8_t*) malloc(buffersSize), buffersSize);
 
     // Setup variables
     commandDelimiter = 0;
     commandHandler = NULL;
 }
 
-void setCommandDelimiter(uint8_t delimiter) {
-    commandDelimiter = delimiter;
-}
-
-void setCommandHandler(CommandHandler handler) {
-    commandHandler = handler;
+void setCommandHandler(CommandHandler handler, uint8_t delimiter) {
+    if ((handler == NULL) || (delimiter == 0)) {
+        commandHandler = NULL;
+        commandDelimiter = 0;
+    } else {
+        commandHandler = handler;
+        commandDelimiter = delimiter;
+    }
 }
 
 inline void disableUARTInterrupts() {
-    // Disable RX and UDR0 interrupts
     UCSR0B &= (~ _BV(RXCIE0)) & (~ _BV(UDRIE0));
 }
 
 inline void setRxMode() {
-    // Disable UDR0 interrupt, enable RX interrupt
     UCSR0B = (UCSR0B & (~ _BV(UDRIE0))) | _BV(RXCIE0);
 }
 
 inline void setTxMode() {
-    // Disable RX interrupt, enable UDR0 interrupt
     UCSR0B = (UCSR0B & (~ _BV(RXCIE0))) | _BV(UDRIE0);
 }
 
@@ -56,7 +55,6 @@ inline bool isUDREmpty() {
 }
 
 inline void addToTxBuffer(uint8_t data) {
-    // If the buffer is full, start sending data synchronously to avoid loss of data
     while (circBufferPush(&txBuff, data) != BUFFER_OK) {
         if (isUDREmpty())
             circBufferPop(&txBuff, &UDR0);
@@ -112,26 +110,21 @@ void printlnInt(int val) {
     println(buffer);
 }
 
-// USART RX complete
+// USART RX complete interrupt handler.
 ISR(RX_ISR) {
     // Receive one byte and put it in the receive buffer
-    uint8_t rcv = UDR0;
-    circBufferPush(&rxBuff, rcv);
-
     // Call the command handler if necessary
-    if ((commandDelimiter != 0) && (rcv == commandDelimiter) && (commandHandler != NULL)) {
+    uint8_t rcv = UDR0;
+    if ((circBufferPush(&rxBuff, rcv) == BUFFER_OK) && (commandDelimiter != 0) && (rcv == commandDelimiter)) {
         (*commandHandler)(&rxBuff);
         // Clear the buffer, as we assume that the command handler has processed all the data
         circBufferClear(&rxBuff);
     }
 }
 
-// USART Data Register (UDR0) empty
+// USART Data Register (UDR0) empty interrupt handler.
 ISR(UDRE_ISR) {
-    uint8_t b;
-    circBufferPop(&txBuff, &b);
-    UDR0 = b;
-    // Switch to RX mode if the buffer is empty
-    if (isCircBufferEmpty(&txBuff))
+    // Transmit a byte or switch to RX mode if the buffer is empty
+    if (circBufferPop(&txBuff, &UDR0) == BUFFER_EMPTY)
         setRxMode();
 }
