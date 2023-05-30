@@ -17,7 +17,7 @@ void loadSettings() {
     for (; i < sizeof(Settings); i++) {
         dst[i] = eeprom_read_byte((uint8_t*) i);
     }
-    if (calcSettingsChecksum() != eeprom_read_byte((uint8_t*) i)) {
+    if (calcSettingsChecksum() == eeprom_read_byte((uint8_t*) i)) {
         // Checksum matches, but make sure data is valid
 #if SERVO_ENABLE == true
         settings.servoDelay = constrain(settings.servoDelay, SERVO_DELAY_MIN, SERVO_DELAY_MAX);
@@ -34,7 +34,11 @@ void loadSettings() {
         settings.closedVal = SERVO_CLOSED_DEFAULT;
         settings.shutterStatus = CLOSED;
 #endif
-        saveSettings();
+        settings.brightness = 0;
+        for (uint8_t i = 0; i < sizeof(Settings); ++i) {
+            eeprom_update_byte((uint8_t*) i, dst[i]);
+        }
+        eeprom_update_byte((uint8_t*) sizeof(Settings), calcSettingsChecksum());
     }
 }
 
@@ -46,4 +50,5 @@ void saveSettings() {
     for (uint8_t i = 0; i < sizeof(Settings); ++i) {
         eeprom_update_byte((uint8_t*) i, src[i]);
     }
+    eeprom_update_byte((uint8_t*) sizeof(Settings), calcSettingsChecksum());
 }
