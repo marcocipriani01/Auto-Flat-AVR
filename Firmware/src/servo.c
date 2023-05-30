@@ -1,11 +1,12 @@
 #include "servo.h"
 
 volatile bool servoHigh;
-volatile uint16_t targetServoTicks;
-volatile uint16_t currentServoTicks;
-volatile double servoSmoothFactor;
+volatile uint16_t currentServoVal;
+volatile uint16_t targetServoVal;
+volatile uint16_t servoInterpolationStep;
+volatile ShutterStatus shutterStatus = CLOSED;
 
-void initServo(uint16_t pulseWidth, double smoothFactor) {
+void initServo(uint16_t pulseWidth) {
     servoHigh = false;
     TCCR1A = 0;                        // Normal counting mode
     TCCR1B = TIMER1_CLOCK_SOURCE;      // Prescaler 8
@@ -14,13 +15,22 @@ void initServo(uint16_t pulseWidth, double smoothFactor) {
     OCR1A = 0xFFFF;                    // Set the Output Compare Register to the maximum value
     TIMSK1 |= _BV(OCIE1A);             // Enable the output compare interrupt
     DDRD |= _BV(PD5);                  // Set PD5 as output
-    setServoPulseWidth(pulseWidth);
-    currentServoTicks = targetServoTicks;
-    servoSmoothFactor = smoothFactor;
+    currentServoVal = targetServoVal = us_TO_TICKS(pulseWidth);
+    servoInterpolationStep = 0;
 }
 
-void setServoPulseWidth(uint16_t pulseWidth) {
-    targetServoTicks = us_TO_TICKS(pulseWidth);
+inline void setServoTarget(uint16_t pulseWidth) {
+    targetServoVal = us_TO_TICKS(pulseWidth);
+}
+
+void setShutter(ShutterStatus val) {
+    if ((val == OPEN) && (shutterStatus != OPEN)) {
+        setServoTarget(settings.openVal);
+        shutterStatus = MOVING;
+    } else if ((val == CLOSED) && (shutterStatus != CLOSED)) {
+        setServoTarget(settings.closedVal);
+        shutterStatus = MOVING;
+    }
 }
 
 ISR(TIMER1_COMPA_vect) {
@@ -32,11 +42,31 @@ ISR(TIMER1_COMPA_vect) {
     } else {
         PORTD |= _BV(PD5);
         servoHigh = true;
-        currentServoTicks = (uint16_t) ((currentServoTicks * (1.0 - servoSmoothFactor)) + (targetServoTicks * servoSmoothFactor));
-        if (abs(currentServoTicks - targetServoTicks) < 2) {
-            currentServoTicks = targetServoTicks;
+
+        servoInterpolationStep++;
+        if (servoInterpolationStep >= (us_TO_TICKS(settings.servoDelay) / 2)) {
+            if (currentServoVal > targetServoVal) {
+                currentServoVal -= us_TO_TICKS(SERVO_STEP_SIZE);
+                if (currentServoVal <= targetServoVal) {
+                    currentServoVal = targetServoVal;
+                    shutterStatus = OPEN;
+                    //settings.shutterStatus = OPEN;
+                    //saveSettings();
+                }
+            } else if (currentServoVal < targetServoVal) {
+                currentServoVal += us_TO_TICKS(SERVO_STEP_SIZE);
+                if (currentServoVal >= targetServoVal) {
+                    currentServoVal = targetServoVal;
+                    shutterStatus = CLOSED;
+                    //settings.shutterStatus = CLOSED;
+                    //saveSettings();
+                    //if (lightOn) targetBrightness = brightness;
+                }
+            }
+            servoInterpolationStep = 0;
         }
-        OCR1A = currentServoTicks;
+        
+        OCR1A = currentServoVal;
         TCNT1 = 0;
     }
 }

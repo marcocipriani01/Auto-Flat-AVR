@@ -8,11 +8,6 @@ uint8_t targetBrightness = 0;
 // The current value of the brightness of the panel (used for the fade effect)
 uint8_t currentBrightness = 0;
 
-#if SERVO_ENABLE == true
-ShutterStatus shutterStatus = CLOSED;
-uint16_t targetServoVal = 0;
-uint16_t currentServoVal = 0;
-#endif
 
 int main(void) {
     // Serial begin
@@ -30,12 +25,10 @@ int main(void) {
 
     // Servo motor
     if (settings.shutterStatus == OPEN) {
-        initServo(settings.openVal, 0.01);
-        currentServoVal = targetServoVal = settings.openVal;
+        initServo(settings.openVal);
         shutterStatus = OPEN;
     } else {
-        initServo(settings.closedVal, 0.01);
-        currentServoVal = targetServoVal = settings.closedVal;
+        initServo(settings.closedVal);
     }
 
     // Enable global interrupts and sleep mode
@@ -43,14 +36,8 @@ int main(void) {
     sei();
 
     while (1) {
-        setServoPulseWidth(SERVO_CLOSED_DEFAULT);
-        _delay_ms(2000);
-        setServoPulseWidth(SERVO_OPEN_DEFAULT);
-        _delay_ms(2000);
-    }
-
-    while (1) {
         //bool canSleep = true;
+        // TODO: only sleep if there is no servo motor?
         bool canSleep = false;
 
         // EL panel fade effect
@@ -60,29 +47,6 @@ int main(void) {
             setPanelBrigthness(++currentBrightness);
         else
             canSleep &= true;
-
-        if (currentServoVal > targetServoVal) {
-            currentServoVal -= SERVO_STEP_SIZE;
-            //setServoPulseWidth(currentServoVal);
-            if (currentServoVal <= targetServoVal) {
-                currentServoVal = targetServoVal;
-                shutterStatus = OPEN;
-                settings.shutterStatus = OPEN;
-                saveSettings();
-            }
-            _delay_ms(settings.servoDelay);
-        } else if (currentServoVal < targetServoVal) {
-            currentServoVal += SERVO_STEP_SIZE;
-            //setServoPulseWidth(currentServoVal);
-            if (currentServoVal >= targetServoVal) {
-                currentServoVal = targetServoVal;
-                shutterStatus = CLOSED;
-                settings.shutterStatus = CLOSED;
-                saveSettings();
-                if (lightOn) targetBrightness = brightness;
-            }
-            _delay_ms(settings.servoDelay);
-        }
 
         // Enter sleep mode
         if (canSleep)
@@ -96,18 +60,6 @@ int main(void) {
 inline void setPanelBrigthness(uint8_t brightness) {
     OCR2B = brightness;
 }
-
-#if SERVO_ENABLE == true
-void setShutter(ShutterStatus val) {
-    if ((val == OPEN) && (shutterStatus != OPEN)) {
-        targetServoVal = settings.openVal;
-        shutterStatus = MOVING;
-    } else if ((val == CLOSED) && (shutterStatus != CLOSED)) {
-        targetServoVal = settings.closedVal;
-        shutterStatus = MOVING;
-    }
-}
-#endif
 
 void onCommandReceived(CircBuffer* buffer) {
     uint8_t b;

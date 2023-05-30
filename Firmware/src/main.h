@@ -28,10 +28,6 @@
 
 void setPanelBrigthness(uint8_t brightness);
 
-#if SERVO_ENABLE
-void setShutter(ShutterStatus val);
-#endif
-
 void onCommandReceived(CircBuffer* buffer);
 
 #endif

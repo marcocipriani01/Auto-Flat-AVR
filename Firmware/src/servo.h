@@ -6,6 +6,9 @@
 #include <avr/interrupt.h>
 
 #include "utils.h"
+#include "config.h"
+#include "alnitak.h"
+#include "settings.h"
 
 #define SERVO_PRESCALER 8
 #if SERVO_PRESCALER != 1 && SERVO_PRESCALER != 8 && SERVO_PRESCALER != 64 && SERVO_PRESCALER != 256 && SERVO_PRESCALER != 1024
@@ -28,11 +31,13 @@
 #define TICKS_TO_us(ticks) ((ticks * SERVO_PRESCALER) / CLOCKS_PER_us)
 
 extern volatile bool servoHigh;
-extern volatile uint16_t targetServoTicks;
-extern volatile uint16_t currentServoTicks;
-extern volatile double servoSmoothFactor;
+extern volatile uint16_t currentServoVal;
+extern volatile uint16_t targetServoVal;
+extern volatile uint16_t servoInterpolationStep;
+extern volatile ShutterStatus shutterStatus;
 
-void initServo(uint16_t pulseWidth, double smoothFactor);
-void setServoPulseWidth(uint16_t pulseWidth);
+void initServo(uint16_t pulseWidth);
+void setServoTarget(uint16_t pulseWidth);
+void setShutter(ShutterStatus val);
 
 #endif
