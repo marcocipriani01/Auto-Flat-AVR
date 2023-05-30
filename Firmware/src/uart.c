@@ -69,13 +69,32 @@ void uartWrite(uint8_t* data, uint16_t length) {
 
 void print(const char* data) {
     // Copy data to buffer
-    setTxMode();
+    /*setTxMode();
     char c;
     while ((c = *(data++)) != 0) {
         // If the buffer is full, wait until there is space to avoid loss of data
         while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL)
             maybeSendNextByte();
+    }*/
+    /*UCSR0B = (UCSR0B & (~(1 << RXCIE0)));
+    while (*data != 0) {
+        while (!(UCSR0A & (1 << UDRE0)));
+        UDR0 = *data;
+        data++;
+    }*/
+
+    UCSR0B = (UCSR0B & (~(1 << RXCIE0)));
+    char c;
+    while ((c = *(data++)) != 0) {
+        while (circBufferPush(&txBuff, (uint8_t) c) == BUFFER_FULL) {
+            if (UCSR0A & (1 << UDRE0)) {
+                uint8_t b;
+                if (circBufferPop(&txBuff, &b) == BUFFER_OK)
+                    UDR0 = b;
+            }
+        }
     }
+    setRxMode();
 }
 
 void println(const char* data) {
@@ -117,11 +136,11 @@ ISR(RX_ISR) {
 }
 
 // USART Data Register (UDR0) empty
-ISR(UDRE_ISR) {
+/*ISR(UDRE_ISR) {
     uint8_t b;
     circBufferPop(&txBuff, &b);
     UDR0 = b;
     // Switch to RX mode if the buffer is empty
     if (isCircBufferEmpty(&txBuff))
         setRxMode();
-}
+}*/
