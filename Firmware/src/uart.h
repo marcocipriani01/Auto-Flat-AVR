@@ -31,9 +31,12 @@ void uartBegin(uint16_t baudrate);
 void setCommandDelimiter(uint8_t delimiter);
 void setCommandHandler(CommandHandler handler);
 
+void disableUARTInterrupts();
 void setRxMode();
 void setTxMode();
-void maybeSendNextByte();
+bool isUDREmpty();
+void addToTxBuffer(uint8_t data);
+void startUARTTransmission();
 
 void uartWrite(uint8_t* data, uint16_t length);
 void print(const char* data);

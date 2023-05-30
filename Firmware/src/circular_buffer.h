@@ -19,9 +19,10 @@ typedef struct {
 
 void circBufferInit(CircBuffer* buffer, uint8_t* data, uint16_t size);
 bool isCircBufferEmpty(CircBuffer* buffer);
+bool isCircBufferHasData(CircBuffer* buffer);
 BufferStatus circBufferPush(CircBuffer* buffer, uint8_t data);
-BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* data);
-BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* data, uint16_t length);
+BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* dest);
+BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* dest, uint16_t length);
 void circBufferClear(CircBuffer* buffer);
 
 #endif

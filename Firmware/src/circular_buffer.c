@@ -11,6 +11,10 @@ bool isCircBufferEmpty(CircBuffer* buffer) {
     return (buffer->head == buffer->tail);
 }
 
+bool isCircBufferHasData(CircBuffer* buffer) {
+    return (buffer->head != buffer->tail);
+}
+
 BufferStatus circBufferPush(CircBuffer* buffer, uint8_t data) {
     // `next` is where head will point to after the push
     uint16_t next = buffer->head + 1;
@@ -25,7 +29,7 @@ BufferStatus circBufferPush(CircBuffer* buffer, uint8_t data) {
     return BUFFER_OK;
 }
 
-BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* data) {
+BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* dest) {
     // If head == tail, there's no data
     if (buffer->head == buffer->tail)
         return BUFFER_EMPTY;
@@ -34,15 +38,15 @@ BufferStatus circBufferPop(CircBuffer* buffer, uint8_t* data) {
     if(next >= buffer->size)
         next = 0;
 
-    *data = buffer->data[buffer->tail];
+    *dest = buffer->data[buffer->tail];
     buffer->tail = next;
     return BUFFER_OK;
 }
 
-BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* data, uint16_t length) {
+BufferStatus circBufferPopArray(CircBuffer* buffer, uint8_t* dest, uint16_t length) {
     uint8_t b;
     while (circBufferPop(buffer, &b) == BUFFER_OK) {
-        *(data++) = b;
+        *(dest++) = b;
         length--;
         if (length == 0)
             return BUFFER_OK;
