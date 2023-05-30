@@ -23,7 +23,7 @@
 #include "alnitak.h"
 #include "settings.h"
 #if SERVO_ENABLE == true
-#include "servo.h"
+#include "shutter.h"
 #endif
 
 void setPanelBrigthness(uint8_t brightness);

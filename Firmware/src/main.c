@@ -1,16 +1,16 @@
 #include "main.h"
 
 bool lightOn = false;
-// The value of the brightness of the panel as requested by the PC
-uint8_t brightness = 255;
-// The target value of the brightness of the panel (used for the fade effect)
-uint8_t targetBrightness = 0;
-// The current value of the brightness of the panel (used for the fade effect)
-uint8_t currentBrightness = 0;
+uint8_t brightness = 255;           // The brightness value of the panel as requested by the computer
+uint8_t targetBrightness = 0;       // The target brightness value (used for the fade effect)
+uint8_t currentBrightness = 0;      // The current brightness value (used for the fade effect)
 
+#if SERVO_ENABLE == true
+ShutterStatus lastShutterStatus = CLOSED;
+#endif
 
 int main(void) {
-    // Serial begin
+    // UART begin
     uartBegin(BAUDRATE, UART_BUFFERS_SIZE);
     setCommandHandler(onCommandReceived, '\r');
 
@@ -24,35 +24,37 @@ int main(void) {
     setPanelBrigthness(settings.brightness);            // Load brightness from settings
 
     // Servo motor
-    if (settings.shutterStatus == OPEN) {
-        initServo(settings.openVal);
-        shutterStatus = OPEN;
-    } else {
-        initServo(settings.closedVal);
-    }
+    initServo(lastShutterStatus = settings.shutterStatus);
 
     // Enable global interrupts and sleep mode
     set_sleep_mode(SLEEP_MODE_IDLE);
     sei();
 
     while (1) {
-        //bool canSleep = true;
-        // TODO: only sleep if there is no servo motor?
-        bool canSleep = false;
+        // Check if the shutter status has changed, then save it to EEPROM
+        if (lastShutterStatus != shutterStatus) {
+            if (shutterStatus == CLOSED) {
+                settings.shutterStatus = shutterStatus;
+                saveSettings();
+                // If the shutter is closed, the light can be turned on
+                if (lightOn) targetBrightness = brightness;
+            } else if (shutterStatus == OPEN) {
+                settings.shutterStatus = shutterStatus;
+                saveSettings();
+            }
+            lastShutterStatus = shutterStatus;
+        }
 
         // EL panel fade effect
-        if (currentBrightness > targetBrightness)
+        if (currentBrightness > targetBrightness) {
             setPanelBrigthness(--currentBrightness);
-        else if (currentBrightness < targetBrightness)
-            setPanelBrigthness(++currentBrightness);
-        else
-            canSleep &= true;
-
-        // Enter sleep mode
-        if (canSleep)
-            sleep_mode();
-        else
             _delay_ms(EL_PANEL_FADE_DELAY);
+        } else if (currentBrightness < targetBrightness) {
+            setPanelBrigthness(++currentBrightness);
+            _delay_ms(EL_PANEL_FADE_DELAY);
+        } else {
+            sleep_mode();
+        } 
     }
     return 0;
 }
