@@ -26,7 +26,7 @@ int serialOpen(const char* port, int baudrate) {
             baudrate = B2500000;
             break;
         default:
-            return 0;
+            return -2;
     }
     cfsetospeed(&tty, baudrate);
     cfsetispeed(&tty, baudrate);
@@ -35,7 +35,7 @@ int serialOpen(const char* port, int baudrate) {
     tty.c_cflag |= 0;
     tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;         // 8bit chars
     if (tcsetattr(fd, TCSANOW, &tty) != 0)
-        return -2;
+        return -3;
 
     return fd;
 }
@@ -52,4 +52,12 @@ bool serialSetBlocking(int fd, bool block) {
         return false;
 
     return true;
+}
+
+inline void serialClose(int fd) {
+    close(fd);
+}
+
+inline void serialPrint(int fd, const char* str) {
+    write(fd, str, strlen(str));
 }
