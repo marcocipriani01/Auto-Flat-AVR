@@ -26,6 +26,8 @@ void loadSettings() {
         if (!((settings.shutterStatus == CLOSED) || (settings.shutterStatus == OPEN)))
             settings.shutterStatus = CLOSED;
 #endif
+        if (settings.brightness < 10)
+            settings.brightness = 255;
     } else {
         // Checksum doesn't match, load default settings
 #if SERVO_ENABLE == true
@@ -34,7 +36,7 @@ void loadSettings() {
         settings.closedVal = SERVO_CLOSED_DEFAULT;
         settings.shutterStatus = CLOSED;
 #endif
-        settings.brightness = 0;
+        settings.brightness = 255;
         for (uint8_t i = 0; i < sizeof(Settings); ++i) {
             eeprom_update_byte((uint8_t*) i, dst[i]);
         }
@@ -43,9 +45,11 @@ void loadSettings() {
 }
 
 void saveSettings() {
+#if SERVO_ENABLE == true
     settings.servoStep = constrain(settings.servoStep, SERVO_STEP_MIN, SERVO_STEP_MAX);
     settings.closedVal = constrain(settings.closedVal, SERVO_CLOSED_MIN, SERVO_CLOSED_MAX);
     settings.openVal = constrain(settings.openVal, SERVO_OPEN_MIN, SERVO_OPEN_MAX);
+#endif
     uint8_t* src = (uint8_t*)&settings;
     for (uint8_t i = 0; i < sizeof(Settings); ++i) {
         eeprom_update_byte((uint8_t*) i, src[i]);
