@@ -30,12 +30,6 @@
 #define us_TO_TICKS(us) ((CLOCKS_PER_us * us) / SERVO_PRESCALER)
 
 /**
- * Indicates whether the servo signal is currently high or low.
- * This variable is used by the ISR to switch the signal and determine the next delay.
-*/
-extern volatile bool servoHigh;
-
-/**
  * The current servo value, in ticks of the timer.
 */
 extern volatile uint16_t currentServoVal;
