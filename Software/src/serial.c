@@ -1,80 +1,55 @@
 #include "serial.h"
 
-#include <errno.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <termios.h>
-#include <unistd.h>
+int serialOpen(const char* port, int baudrate) {
+    int fd = open(port, O_RDWR | O_NOCTTY | O_SYNC);
+    if (fd < 0)
+        return 0;
 
-int serial_set_interface_attribs(int fd, int speed, int parity) {
     struct termios tty;
     memset(&tty, 0, sizeof tty);
-    if (tcgetattr(fd, &tty) != 0) {
-        printf("error %d from tcgetattr", errno);
+    if (tcgetattr(fd, &tty) != 0)
         return -1;
-    }
-    switch (speed) {
+    switch (baudrate) {
         case 9600:
-            speed = B9600;
+            baudrate = B9600;
             break;
         case 19200:
-            speed = B19200;
+            baudrate = B19200;
             break;
         case 57600:
-            speed = B57600;
+            baudrate = B57600;
             break;
         case 115200:
-            speed = B115200;
+            baudrate = B115200;
             break;
-        case 230400:
-            speed = B230400;
-            break;
-        case 576000:
-            speed = B576000;
-            break;
-        case 921600:
-            speed = B921600;
+        case 2500000:
+            baudrate = B2500000;
             break;
         default:
-            printf("cannot sed baudrate %d\n", speed);
-            return -1;
+            return 0;
     }
-    cfsetospeed(&tty, speed);
-    cfsetispeed(&tty, speed);
+    cfsetospeed(&tty, baudrate);
+    cfsetispeed(&tty, baudrate);
     cfmakeraw(&tty);
-    // enable reading
-    tty.c_cflag &= ~(PARENB | PARODD);  // shut off parity
-    tty.c_cflag |= parity;
-    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;  // 8-bit chars
+    tty.c_cflag &= ~(PARENB | PARODD);
+    tty.c_cflag |= 0;
+    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;         // 8bit chars
+    if (tcsetattr(fd, TCSANOW, &tty) != 0)
+        return -2;
 
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        printf("error %d from tcsetattr", errno);
-        return -1;
-    }
-    return 0;
+    return fd;
 }
 
-void serial_set_blocking(int fd, int should_block) {
+bool serialSetBlocking(int fd, bool block) {
     struct termios tty;
     memset(&tty, 0, sizeof tty);
-    if (tcgetattr(fd, &tty) != 0) {
-        printf("error %d from tggetattr", errno);
-        return;
-    }
+    if (tcgetattr(fd, &tty) != 0)
+        return false;
+    
+    tty.c_cc[VMIN] = block ? 1 : 0;
+    tty.c_cc[VTIME] = 5;                                // 500ms read timeout
+    if (tcsetattr(fd, TCSANOW, &tty) != 0)
+        return false;
 
-    tty.c_cc[VMIN] = should_block ? 1 : 0;
-    tty.c_cc[VTIME] = 5;  // 0.5 seconds read timeout
-
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) printf("error %d setting term attributes", errno);
-}
-
-int serial_open(const char* name) {
-    int fd = open(name, O_RDWR | O_NOCTTY | O_SYNC);
-    if (fd < 0) {
-        printf("error %d opening serial, fd %d\n", errno, fd);
-    }
-    return fd;
+    return true;
 }

@@ -1,29 +1,20 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "serial.h"
+#include "main.h"
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        printf("usage: %s <filename> <baudrate>", argv[0]);
-        return 0;
+        printf("Usage: %s /dev/ttyUSBx", argv[0]);
+        return 1;
     }
-    char* filename = argv[1];
-    printf("opening serial device [%s] ... ", filename);
-    int fd = serial_open(filename);
-    if (fd <= 0) {
-        printf("Error\n");
-        return 0;
+    
+    char* serialPort = argv[1];
+    printf("Opening serial port %s... ", serialPort);
+    int fd = serialOpen(serialPort, 9600);
+    if ((fd <= 0) && serialSetBlocking(fd, 1)) {
+        printf("Error opening the serial port!\n");
+        return 1;
     } else {
-        printf("Success\n");
+        printf("Connected.\n");
     }
-    int attribs = serial_set_interface_attribs(fd, 9600, 0);
-    if (attribs) {
-        printf("Error\n");
-        return 0;
-    }
-
-    serial_set_blocking(fd, 1);
 
     const int bsize = 10;
     char buf[bsize];

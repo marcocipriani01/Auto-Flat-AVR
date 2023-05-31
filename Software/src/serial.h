@@ -1,15 +1,17 @@
 #pragma once
+
 #include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <termios.h>
 #include <unistd.h>
+#include <string.h>
+#include <stdbool.h>
+#include <termios.h>
 
-//! returns the descriptor of a serial port
-int serial_open(const char* name);
+/**
+ * Opens a serial port and returns its file descriptor.
+ */
+int serialOpen(const char* port, int baudrate);
 
-//! sets the attributes
-int serial_set_interface_attribs(int fd, int speed, int parity);
-
-//! puts the port in blocking/nonblocking mode
-void serial_set_blocking(int fd, int should_block);
+/**
+ * Enables or disables serial port blocking mode.
+ */
+bool serialSetBlocking(int fd, bool block);
