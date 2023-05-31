@@ -301,9 +301,9 @@ void onCommandReceived(CircBuffer* buffer) {
             }
 
             /*
-             * Set the servo speed (unofficial command)
-             * Request: >Zxxx\r
-             *    xxx = servo speed, 0-10
+             *  Set the servo speed (unofficial command)
+             *  Request: >Zxxx\r
+             *      xxx = servo speed, 0-10
              *  Return : *Qiiyyy\n
              *      ii  = deviceId
              *      yyy = the servo step delay
