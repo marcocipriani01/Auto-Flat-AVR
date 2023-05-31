@@ -1,10 +1,12 @@
 #include "main.h"
 
 bool lightOn = false;
-uint8_t brightness = 255;           // The brightness value of the panel as requested by the computer
-uint8_t targetBrightness = 0;       // The target brightness value (used for the fade effect)
-uint8_t currentBrightness = 0;      // The current brightness value (used for the fade effect)
+uint8_t targetBrightness = 0;
 
+#if ENCODER_ENABLE == true
+bool lastEncoderClk = false;
+bool lastEncoderBtn = false;
+#endif
 
 int main(void) {
     // UART begin
@@ -14,14 +16,36 @@ int main(void) {
     // Load settings from EEPROM
     loadSettings();
 
-    // EL panel, PWM on pin PD3
-    TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM20);    // Phase-Correct PWM mode, non-inverting, timer 2
-    TCCR2B = _BV(CS21) | _BV(CS20);                     // Prescaler 32, 980Hz
-    DDRD |= _BV(PD3);                                   // Set pin PD3 as output
-    setPanelBrigthness(settings.brightness);            // Load brightness from settings
-
+#if SERVO_ENABLE == true
     // Servo motor
     initServo(settings.shutterStatus);
+#endif
+
+    // EL panel, PWM on pin PD3
+    TCCR2A = _BV(COM2A1) | _BV(COM2B1) | _BV(WGM20);      // Phase-Correct PWM mode, non-inverting, timer 2
+    TCCR2B = _BV(CS21) | _BV(CS20);                       // Prescaler 32, 980Hz
+    DDRD |= _BV(PD3);                                     // Set pin PD3 as output
+    setPanelBrigthness(settings.brightness);              // Load brightness from settings
+
+    // Rotary brightness encoder
+#if ENCODER_ENABLE == true
+    DDRB &= (~ _BV(PB0)) & (~ _BV(PB1)) & (~ _BV(PB2));   // Set PB0, PB1 and PB2 as input
+    PORTB |= _BV(PB0);                                    // Enable pull-up resistor on PB0 (encoder button)
+    PCICR |= _BV(PCIE0);                                  // Enable pin change interrupt PCIE0
+    PCMSK0 |= _BV(PCINT1);                                // Enable pin change interrupt on PB1 (encoder clock)
+#endif
+
+    // Timer 0, used for the brightness fade effect and the encoder button
+    TCCR0A = 0x00;                                        // Normal mode, timer 0
+    TCCR0B = _BV(CS02) | _BV(CS00);                       // Prescaler 1024, 64μs period at 16MHz clock
+    OCR0A = (F_CPU / 1024) / (255 * 2);                   // OCR0A value to call the ISR every ~2ms. This makes the fade effect last 500ms
+#if ENCODER_ENABLE == true
+    TIFR0 |= _BV(OCF0A) | _BV(TOV0);                      // Clear timer 0 Output Compare Match A flag and overflow flag
+    TIMSK0 |= _BV(OCIE0A) | _BV(TOIE0);                   // Enable timer 0 Output Compare Match interrupt and overflow interrupt
+#else
+    TIFR0 |= _BV(OCF0A);                                  // Clear timer 0 Output Compare Match A flag
+    TIMSK0 |= _BV(OCIE0A);                                // Enable timer 0 Output Compare Match interrupt
+#endif
 
     // Enable global interrupts and sleep mode
     set_sleep_mode(SLEEP_MODE_IDLE);
@@ -34,29 +58,66 @@ int main(void) {
                 settings.shutterStatus = shutterStatus;
                 saveSettings();
                 // If the shutter is closed, the light can be turned on
-                if (lightOn) targetBrightness = brightness;
+                if (lightOn) targetBrightness = settings.brightness;
             } else if (shutterStatus == OPEN) {
                 settings.shutterStatus = shutterStatus;
                 saveSettings();
             }
         }
 
-        // EL panel fade effect
-        if (currentBrightness > targetBrightness) {
-            setPanelBrigthness(--currentBrightness);
-            _delay_ms(EL_PANEL_FADE_DELAY);
-        } else if (currentBrightness < targetBrightness) {
-            setPanelBrigthness(++currentBrightness);
-            _delay_ms(EL_PANEL_FADE_DELAY);
-        } else {
-            sleep_mode();
-        } 
+        // Nothing to do, go to sleep
+        sleep_mode();
     }
     return 0;
 }
 
+// Timer 0 compare match A interrupt
+// Called every ~2ms
+// Used for the brightness fade effect
+ISR(TIMER0_COMPA_vect){
+    if (OCR2B > targetBrightness)
+        OCR2B--;
+    else if (OCR2B < targetBrightness)
+        OCR2B++;
+}
+
+#if ENCODER_ENABLE == true
+// Timer 0 overflow interrupt
+// Called every ~16ms
+// Used to read the encoder button
+ISR(TIMER0_OVF_vect){
+    bool btn = PINB & _BV(PB0);
+    if ((!btn) && (lastEncoderBtn)) {
+        lightOn = !lightOn;
+        setPanelBrigthness(settings.brightness);
+    }
+    lastEncoderBtn = btn;
+}
+#endif
+
+// Pin change interrupt 0
+// Called when the encoder clock changes
+ISR(PCINT0_vect) {
+    bool currClk = PINB & _BV(PB1);
+    if (currClk && (!lastEncoderClk)) {
+        if (PINB & _BV(PB2))
+            setPanelBrigthness(constrain(settings.brightness + ENCODER_BRIGHTNESS_STEP, 0, 255));
+        else
+            setPanelBrigthness(constrain(settings.brightness - ENCODER_BRIGHTNESS_STEP, 0, 255));
+    }
+    lastEncoderClk = currClk;
+}
+
 inline void setPanelBrigthness(uint8_t brightness) {
-    OCR2B = brightness;
+    settings.brightness = brightness;
+#if SERVO_ENABLE == true
+    if (lightOn && (shutterStatus == CLOSED))
+#else
+    if (lightOn)
+#endif
+        targetBrightness = brightness;
+    else
+        targetBrightness = 0;
 }
 
 void onCommandReceived(CircBuffer* buffer) {
@@ -90,9 +151,7 @@ void onCommandReceived(CircBuffer* buffer) {
                 sprintf(temp, "*O%dOOO\n", DEVICE_ID);
                 print(temp);
                 setShutter(OPEN);
-                targetBrightness = 0;
-                currentBrightness = 0;
-                setPanelBrigthness(0);
+                OCR2B = targetBrightness = 0;
                 break;
             }
 
@@ -122,9 +181,9 @@ void onCommandReceived(CircBuffer* buffer) {
                 lightOn = true;
 #if SERVO_ENABLE == true
                 if (shutterStatus == CLOSED)
-                    targetBrightness = brightness;
+                    targetBrightness = settings.brightness;
 #else
-                targetBrightness = brightness;
+                targetBrightness = settings.brightness;
 #endif
                 break;
             }
@@ -155,17 +214,11 @@ void onCommandReceived(CircBuffer* buffer) {
                 if (circBufferPopArray(buffer, (uint8_t*) temp, 3) == BUFFER_EMPTY) return;
 #if EL_PANEL_LOG_SCALE == true
                 // Apply a logaritmic scale to the brightness value
-                brightness = constrain((int) round(exp(log(256.0) * (((double) atoi(temp)) / 255.0)) - 1.0), 0, 255);
+                setPanelBrigthness(constrain((int) round(exp(log(256.0) * (((double) atoi(temp)) / 255.0)) - 1.0), 0, 255));
 #else
-                brightness = constrain(atoi(temp), 0, 255);
-#endif
-#if SERVO_ENABLE == true
-                if (lightOn && (shutterStatus == CLOSED))
-#else
-                if (lightOn)
-#endif
-                    targetBrightness = brightness;
-                sprintf(temp, "*B%d%03d\n", DEVICE_ID, brightness);
+                setPanelBrigthness(constrain(atoi(temp), 0, 255));
+#endif    
+                sprintf(temp, "*B%d%03d\n", DEVICE_ID, settings.brightness);
                 print(temp);
                 break;
             }
@@ -300,7 +353,7 @@ void onCommandReceived(CircBuffer* buffer) {
                     servoDelay = 0,
                     shutterStatus = 0;
 #endif
-                sprintf(temp, "*T%03d%03d%02d%d%d%03d\n", openVal, closedVal, servoDelay, shutterVal, lightOn, brightness);
+                sprintf(temp, "*T%03d%03d%02d%d%d%03d\n", openVal, closedVal, servoDelay, shutterVal, lightOn, settings.brightness);
                 print(temp);
                 break;
             }

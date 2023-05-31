@@ -33,7 +33,7 @@
 ////////////////////////////
 // ENCODER CONFIGURATION  //
 ////////////////////////////
-#define ENCODER_ENABLE false
+#define ENCODER_ENABLE true
 #define ENCODER_BRIGHTNESS_STEP 5
 
 #endif
