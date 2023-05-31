@@ -5,7 +5,7 @@ MCU = UNO
 #MCU = MEGA
 
 # Serial port
-AVRDUDE_PORT = /dev/ttyS9
+AVRDUDE_PORT = /dev/ttyACM0
 
 
 #
