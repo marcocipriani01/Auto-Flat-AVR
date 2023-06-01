@@ -144,9 +144,9 @@ int main(int argc, char** argv) {
                 flushStdin();
                 if (posToTune == 1) {
                     serialPrint(fd, ">O\r");
-                    int newPosition;
-                    printf(YELLOW "Enter the new open position (0-100) or -1 to exit the tuning menu:\n > " NO_COLOR);
                     while (1) {
+                        printf(YELLOW "Enter the new open position (0-100) or -1 to exit the tuning menu: > " NO_COLOR);
+                        int newPosition;
                         if (scanf("%d", &newPosition) != 1) {
                             printf(RED "Invalid position!\n\n" NO_COLOR);
                             flushStdin();
@@ -165,8 +165,8 @@ int main(int argc, char** argv) {
                     printf(GREEN "Done.\n\n" NO_COLOR);
                 } else if (posToTune == 2) {
                     serialPrint(fd, ">C\r");
-                    printf(YELLOW "Enter the new closed position (0-100) or -1 to exit the tuning menu:\n  > " NO_COLOR);
                     while (1) {
+                        printf(YELLOW "Enter the new closed position (0-100) or -1 to exit the tuning menu:  > " NO_COLOR);
                         int newPosition;
                         if (scanf("%d", &newPosition) != 1) {
                             printf(RED "Invalid position!\n\n" NO_COLOR);
@@ -195,7 +195,7 @@ int main(int argc, char** argv) {
                     printf(RED "The shutter is only available on Flip-Flats.\n\n" NO_COLOR);
                     break;
                 }
-                printf(YELLOW "Enter the new speed (0-10) or -1 to go back:\n  > " NO_COLOR);
+                printf(YELLOW "Enter the new speed (0-10) or -1 to go back: > " NO_COLOR);
                 int newSpeed;
                 if ((scanf("%d", &newSpeed) == 1) && (newSpeed >= 0) && (newSpeed <= 10)) {
                     sprintf(buff, ">Z%02d\r", newSpeed);
