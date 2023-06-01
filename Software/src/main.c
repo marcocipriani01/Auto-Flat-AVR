@@ -31,12 +31,12 @@ int main(int argc, char** argv) {
     int attempts = 0;
     const int buffSize = 20;
     char buff[buffSize];
+    int deviceId, firmwareVersion;
     do {
         if (!gotFwVersion) {
             serialPrint(fd, ">V\r");
             msleep(100);
             read(fd, buff, buffSize);
-            int deviceId, firmwareVersion;
             if (sscanf(buff, "*V%02d%03d\n", &deviceId, &firmwareVersion) == 2) {
                 char deviceName[20];
                 deviceIDString(deviceId, deviceName);
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
                 gotFwVersion = true;
             }
         } else if (!gotSettings) {
-            gotSettings = readSettings(fd);
+            gotSettings = readSettings(fd, deviceId);
         }
         attempts++;
     } while (((!gotFwVersion) || (!gotSettings)) && (attempts < 3));
@@ -94,18 +94,34 @@ int main(int argc, char** argv) {
             }
 
             case 4: {
+                if (deviceId != FLIP_FLAT) {
+                    printf(RED "The shutter is only available on Flip-Flats.\n\n" NO_COLOR);
+                    break;
+                }
+                printf("Opening");
                 serialPrint(fd, ">O\r");
+                waitForMotorStop(fd);
                 printf(GREEN "Done.\n\n" NO_COLOR);
                 break;
             }
 
             case 5: {
+                if (deviceId != FLIP_FLAT) {
+                    printf(RED "The shutter is only available on Flip-Flats.\n\n" NO_COLOR);
+                    break;
+                }
+                printf("Closing");
                 serialPrint(fd, ">C\r");
+                waitForMotorStop(fd);
                 printf(GREEN "Done.\n\n" NO_COLOR);
                 break;
             }
 
             case 6: {
+                if (deviceId != FLIP_FLAT) {
+                    printf(RED "The shutter is only available on Flip-Flats.\n\n" NO_COLOR);
+                    break;
+                }
                 printf("Which position would you like to tune?\n");
                 printf("  1. Open position\n");
                 printf("  2. Closed position\n");
@@ -115,7 +131,7 @@ int main(int argc, char** argv) {
                 if (posToTune == 1) {
                     serialPrint(fd, ">O\r");
                     int newPosition;
-                    printf(YELLOW "Enter the new open position (0-100) or -1 to exit the tuning menu.\n > " NO_COLOR);
+                    printf(YELLOW "Enter the new open position (0-100) or -1 to exit the tuning menu:\n > " NO_COLOR);
                     while (1) {
                         int newPosition;
                         scanf("%d", &newPosition);
@@ -132,7 +148,7 @@ int main(int argc, char** argv) {
                 } else if (posToTune == 2) {
                     serialPrint(fd, ">C\r");
                     int newPosition;
-                    printf(YELLOW "Enter the new closed position (0-100) or -1 to exit the tuning menu.\n  > " NO_COLOR);
+                    printf(YELLOW "Enter the new closed position (0-100) or -1 to exit the tuning menu:\n  > " NO_COLOR);
                     while (1) {
                         int newPosition;
                         scanf("%d", &newPosition);
@@ -153,7 +169,11 @@ int main(int argc, char** argv) {
             }
 
             case 7: {
-                printf(YELLOW "Enter the new speed (0-10) or -1 to exit the tuning menu.\n  > " NO_COLOR);
+                if (deviceId != FLIP_FLAT) {
+                    printf(RED "The shutter is only available on Flip-Flats.\n\n" NO_COLOR);
+                    break;
+                }
+                printf(YELLOW "Enter the new speed (0-10) or -1 to go back:\n  > " NO_COLOR);
                 int newSpeed;
                 scanf("%d", &newSpeed);
                 if ((newSpeed >= 0) && (newSpeed <= 10)) {
@@ -166,8 +186,11 @@ int main(int argc, char** argv) {
             }
 
             case 8: {
-                if (!readSettings(fd))
+                printf("Reading settings...\n");
+                if (!readSettings(fd, deviceId))
                     printf(RED "Error: could not read the device configuration!\n\n" NO_COLOR);
+                else
+                    printf(GREEN "Done.\n\n" NO_COLOR);
                 break;
             }
 
@@ -185,24 +208,56 @@ int main(int argc, char** argv) {
     }
 }
 
-bool readSettings(int fd) {
+bool readSettings(int fd, int deviceId) {
     const int buffSize = 20;
     char buff[buffSize];
     serialPrint(fd, ">T\r");
     msleep(100);
     read(fd, buff, buffSize);
     bool lightOn;
-    int openVal, closedVal, servoSpeed, brightness, shutter;
-    if (sscanf(buff, "*T%03d%03d%02d%01d%01d%03d\n",
-        &openVal, &closedVal, &servoSpeed, &shutter, (int*) &lightOn, &brightness) == 6) {
-        printf("  Open pos.:\t%d\n", openVal);
-        printf("  Closed pos.:\t%d\n", closedVal);
-        printf("  Speed:\t%d\n", servoSpeed);
-        shutterStatusString((ShutterStatus) shutter, buff);
-        printf("  Shutter:\t%s\n", buff);
-        printf("  Light:\t%s\n", lightOn ? "ON" : "OFF");
-        printf("  Brightness:\t%d/255\n", brightness);
-        return true;
+    int brightness;
+    if (deviceId == FLIP_FLAT) {
+        int openVal, closedVal, servoSpeed, shutter;
+        if (sscanf(buff, "*T%03d%03d%02d%01d%01d%03d\n",
+            &openVal, &closedVal, &servoSpeed, &shutter, (int*) &lightOn, &brightness) == 6) {
+            printf("  Open pos.:\t%d\n", openVal);
+            printf("  Closed pos.:\t%d\n", closedVal);
+            printf("  Speed:\t%d\n", servoSpeed);
+            shutterStatusString((ShutterStatus) shutter, buff);
+            printf("  Shutter:\t%s\n", buff);
+            printf("  Light:\t%s\n", lightOn ? "ON" : "OFF");
+            printf("  Brightness:\t%d/255\n", brightness);
+            return true;
+        }
+    } else {
+        if (sscanf(buff, "*T%*03d%*03d%*02d%*01d%01d%03d\n", (int*) &lightOn, &brightness) == 2) {
+            printf("  Light:\t%s\n", lightOn ? "ON" : "OFF");
+            printf("  Brightness:\t%d/255\n", brightness);
+            return true;
+        }
     }
     return false;
+}
+
+void waitForMotorStop(int fd) {
+    const int buffSize = 20;
+    char buff[buffSize];
+    int attempts = 0;
+    do {
+        msleep(400);
+        printf(".");
+        fflush(stdout);
+        serialPrint(fd, ">S\r");
+        msleep(100);
+        read(fd, buff, buffSize);
+        int shutter;
+        if (sscanf(buff, "*S%*02d%*01d%*01d%01d\n", &shutter) == 1) {
+            if (((ShutterStatus) shutter) != MOVING) {
+                printf("\n");
+                return;
+            }
+        }
+        attempts++;
+    } while (attempts < 90);
+    printf(RED "\nError: motor timerout.\n" NO_COLOR);
 }
