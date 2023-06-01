@@ -54,4 +54,9 @@ void initServo(ShutterStatus initialStatus);
 */
 void setShutter(ShutterStatus val);
 
+/**
+ * Manually sets the target servo pulse width in 1μs.
+*/
+void setServoTarget(uint16_t pulseWidth);
+
 #endif

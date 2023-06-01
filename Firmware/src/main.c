@@ -281,6 +281,8 @@ void onCommandReceived(CircBuffer* buffer) {
                 settings.openVal = linearMap(atoi(temp), 0, 100, SERVO_OPEN_MAX, SERVO_OPEN_MIN);
                 sprintf(temp, "*Q%d%04d\n", DEVICE_ID, settings.openVal);
                 print(temp);
+                if (shutterStatus == OPEN)
+                    setServoTarget(settings.openVal);
                 break;
             }
 
@@ -297,6 +299,8 @@ void onCommandReceived(CircBuffer* buffer) {
                 settings.closedVal = linearMap(atoi(temp), 0, 100, SERVO_CLOSED_MAX, SERVO_CLOSED_MIN);
                 sprintf(temp, "*K%d%04d\n", DEVICE_ID, settings.closedVal);
                 print(temp);
+                if (shutterStatus == CLOSED)
+                    setServoTarget(settings.closedVal);
                 break;
             }
 

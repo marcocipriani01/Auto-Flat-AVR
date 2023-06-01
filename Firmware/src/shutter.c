@@ -26,6 +26,10 @@ void setShutter(ShutterStatus val) {
     }
 }
 
+inline void setServoTarget(uint16_t pulseWidth) {
+    targetServoVal = us_TO_TICKS(pulseWidth);
+}
+
 ISR(TIMER1_COMPA_vect) {
     if (bit_is_set(PORTD, PD5)) {
         OCR1A = 0xFFFF;
@@ -35,13 +39,15 @@ ISR(TIMER1_COMPA_vect) {
             currentServoVal -= us_TO_TICKS(settings.servoStep);
             if (currentServoVal <= targetServoVal) {
                 currentServoVal = targetServoVal;
-                shutterStatus = OPEN;
+                if (currentServoVal == us_TO_TICKS(settings.openVal))
+                    shutterStatus = OPEN;
             }
         } else if (currentServoVal < targetServoVal) {
             currentServoVal += us_TO_TICKS(settings.servoStep);
             if (currentServoVal >= targetServoVal) {
                 currentServoVal = targetServoVal;
-                shutterStatus = CLOSED;
+                if (currentServoVal == us_TO_TICKS(settings.closedVal))
+                    shutterStatus = CLOSED;
             }
         }
         
