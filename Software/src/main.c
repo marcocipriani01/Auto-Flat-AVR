@@ -68,7 +68,12 @@ int main(int argc, char** argv) {
         printf("  9. Exit\n");
         printf(YELLOW "Enter a command: > " NO_COLOR);
         int command;
-        scanf("%d", &command);
+        if (scanf("%d", &command) != 1) {
+            printf(RED "Invalid command!\n\n" NO_COLOR);
+            flushStdin();
+            continue;
+        }
+        flushStdin();
 
         switch (command) {
             case 1: {
@@ -86,10 +91,14 @@ int main(int argc, char** argv) {
             case 3: {
                 printf(YELLOW "Enter the brightness (0-255): > " NO_COLOR);
                 int brightness;
-                scanf("%d", &brightness);
-                sprintf(buff, ">B%03d\r", brightness);
-                serialPrint(fd, buff);
-                printf(GREEN "Done.\n\n" NO_COLOR);
+                if (scanf("%d", &brightness) == 1) {
+                    sprintf(buff, ">B%03d\r", brightness);
+                    serialPrint(fd, buff);
+                    printf(GREEN "Done.\n\n" NO_COLOR);
+                } else {
+                    printf(RED "Invalid brightness!\n\n" NO_COLOR);
+                }
+                flushStdin();
                 break;
             }
 
@@ -127,14 +136,24 @@ int main(int argc, char** argv) {
                 printf("  2. Closed position\n");
                 printf(YELLOW "  > " NO_COLOR);
                 int posToTune;
-                scanf("%d", &posToTune);
+                if (scanf("%d", &posToTune) != 1) {
+                    printf(RED "Invalid option!\n\n" NO_COLOR);
+                    flushStdin();
+                    break;
+                }
+                flushStdin();
                 if (posToTune == 1) {
                     serialPrint(fd, ">O\r");
                     int newPosition;
                     printf(YELLOW "Enter the new open position (0-100) or -1 to exit the tuning menu:\n > " NO_COLOR);
                     while (1) {
                         int newPosition;
-                        scanf("%d", &newPosition);
+                        if (scanf("%d", &newPosition) != 1) {
+                            printf(RED "Invalid position!\n\n" NO_COLOR);
+                            flushStdin();
+                            break;
+                        }
+                        flushStdin();
                         if ((newPosition >= 0) && (newPosition <= 100)) {
                             sprintf(buff, ">Q%03d\r", newPosition);
                             serialPrint(fd, buff);
@@ -151,7 +170,12 @@ int main(int argc, char** argv) {
                     printf(YELLOW "Enter the new closed position (0-100) or -1 to exit the tuning menu:\n  > " NO_COLOR);
                     while (1) {
                         int newPosition;
-                        scanf("%d", &newPosition);
+                        if (scanf("%d", &newPosition) != 1) {
+                            printf(RED "Invalid position!\n\n" NO_COLOR);
+                            flushStdin();
+                            break;
+                        }
+                        flushStdin();
                         if ((newPosition >= 0) && (newPosition <= 100)) {
                             sprintf(buff, ">K%03d\r", newPosition);
                             serialPrint(fd, buff);
@@ -175,12 +199,16 @@ int main(int argc, char** argv) {
                 }
                 printf(YELLOW "Enter the new speed (0-10) or -1 to go back:\n  > " NO_COLOR);
                 int newSpeed;
-                scanf("%d", &newSpeed);
-                if ((newSpeed >= 0) && (newSpeed <= 10)) {
+                if ((scanf("%d", &newSpeed) == 1) && (newSpeed >= 0) && (newSpeed <= 10)) {
                     sprintf(buff, ">Z%02d\r", newSpeed);
                     serialPrint(fd, buff);
                     msleep(100);
                     printf(GREEN "Done.\n\n" NO_COLOR);
+                    flushStdin();
+                } else {
+                    printf(RED "Invalid speed!\n\n" NO_COLOR);
+                    flushStdin();
+                    break;
                 }
                 break;
             }
@@ -206,6 +234,11 @@ int main(int argc, char** argv) {
             }
         }
     }
+}
+
+void flushStdin() {
+    int c;
+    while (((c = getchar()) != '\n') && (c != EOF)) {}
 }
 
 bool readSettings(int fd, int deviceId) {

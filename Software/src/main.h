@@ -9,5 +9,6 @@
 #include "alnitak.h"
 #include "printf_colors.h"
 
+void flushStdin();
 bool readSettings(int fd, int deviceId);
 void waitForMotorStop(int fd);
