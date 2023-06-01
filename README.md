@@ -4,7 +4,7 @@ Port of the Auto Flat project in pure C with AVR libraries.
 
 ## Description
 
-Auto Flat is PC-controlled lightbox and dust cover implmented using the Alnitak (Flip-Flat/Flat-Man) command set available [here](https://www.optecinc.com/astronomy/catalog/alnitak/resources/Alnitak_GenericCommandsR4.pdf). It is meant to be used with the Auto Flat Windows ASCOM drivers (closed source, available [on my website](https://marcocipriani01.github.io/projects/Auto_Flat)) or with the included Linux command-line software.
+Auto Flat is PC-controlled lightbox and dust cover implemented using the Alnitak (Flip-Flat/Flat-Man) command set available [here](https://www.optecinc.com/astronomy/catalog/alnitak/resources/Alnitak_GenericCommandsR4.pdf). It is meant to be used with Alnitak-compatible clients or with the included Linux command-line software.
 
 ## Serial protocol
 
