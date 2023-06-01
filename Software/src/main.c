@@ -147,7 +147,6 @@ int main(int argc, char** argv) {
                     int newPosition;
                     printf(YELLOW "Enter the new open position (0-100) or -1 to exit the tuning menu:\n > " NO_COLOR);
                     while (1) {
-                        int newPosition;
                         if (scanf("%d", &newPosition) != 1) {
                             printf(RED "Invalid position!\n\n" NO_COLOR);
                             flushStdin();
@@ -166,7 +165,6 @@ int main(int argc, char** argv) {
                     printf(GREEN "Done.\n\n" NO_COLOR);
                 } else if (posToTune == 2) {
                     serialPrint(fd, ">C\r");
-                    int newPosition;
                     printf(YELLOW "Enter the new closed position (0-100) or -1 to exit the tuning menu:\n  > " NO_COLOR);
                     while (1) {
                         int newPosition;
