@@ -25,6 +25,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 
 $(OUT_FILE):	$(OBJS) 
 	gcc $(GCC_OPTS) -o $@ $^
+	chmod +x $(BUILD_DIR)/main
 
 clean:
 	rm -f build/*

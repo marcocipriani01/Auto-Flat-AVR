@@ -7,3 +7,6 @@
 #include "msleep.h"
 #include "serial.h"
 #include "alnitak.h"
+#include "printf_colors.h"
+
+bool readSettings(int fd);
