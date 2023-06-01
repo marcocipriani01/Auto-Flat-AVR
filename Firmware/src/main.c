@@ -349,15 +349,15 @@ void onCommandReceived(CircBuffer* buffer) {
 #if SERVO_ENABLE == true
                 uint8_t openVal = linearMap(settings.openVal, SERVO_OPEN_MAX, SERVO_OPEN_MIN, 0, 100),
                     closedVal = linearMap(settings.closedVal, SERVO_CLOSED_MAX, SERVO_CLOSED_MIN, 0, 100),
-                    servoDelay = linearMap(settings.servoStep, SERVO_STEP_MIN, SERVO_STEP_MAX, 0, 10),
+                    servoSpeed = linearMap(settings.servoStep, SERVO_STEP_MIN, SERVO_STEP_MAX, 0, 10),
                     shutterVal = (uint8_t) shutterStatus;
 #else
                 uint8_t openVal = 0,
                     closedVal = 0,
-                    servoDelay = 0,
+                    servoSpeed = 0,
                     shutterStatus = 0;
 #endif
-                sprintf(temp, "*T%03d%03d%02d%d%d%03d\n", openVal, closedVal, servoDelay, shutterVal, lightOn, settings.brightness);
+                sprintf(temp, "*T%03d%03d%02d%d%d%03d\n", openVal, closedVal, servoSpeed, shutterVal, lightOn, settings.brightness);
                 print(temp);
                 break;
             }
