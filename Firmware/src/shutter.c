@@ -12,6 +12,7 @@ void initServo(ShutterStatus initialStatus) {
     OCR1A = 0xFFFF;                                 // Set the Output Compare Register to the maximum value
     TIMSK1 |= _BV(OCIE1A);                          // Enable the output compare interrupt
     DDRD |= _BV(PD5);                               // Set PD5 as output
+    shutterStatus = initialStatus;
     uint16_t pulseWidth = (initialStatus == OPEN) ? settings.openVal : settings.closedVal;
     currentServoVal = targetServoVal = us_TO_TICKS(pulseWidth);
 }
