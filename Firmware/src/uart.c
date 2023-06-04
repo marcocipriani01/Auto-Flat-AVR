@@ -98,14 +98,14 @@ void println(const char* data) {
     startUARTTransmission();
 }
 
-void printInt(int val) {
-    char buffer[10];
+void printInt(int16_t val) {
+    char buffer[7];
     itoa(val, buffer, 10);
     print(buffer);
 }
 
-void printlnInt(int val) {
-    char buffer[10];
+void printlnInt(int16_t val) {
+    char buffer[7];
     itoa(val, buffer, 10);
     println(buffer);
 }

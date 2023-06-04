@@ -2,6 +2,7 @@
 #define UART_H
 
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -90,12 +91,12 @@ void println(const char* data);
  * Prints an integer to the UART interface.
  * It is non-blocking if there is enough space in the buffer.
 */
-void printInt(int val);
+void printInt(int16_t val);
 
 /**
  * Prints an integer to the UART interface, followed by a newline character.
  * It is non-blocking if there is enough space in the buffer.
 */
-void printlnInt(int val);
+void printlnInt(int16_t val);
 
 #endif
