@@ -1,12 +1,14 @@
 #ifndef SERVO_H
 #define SERVO_H
 
+#include "config.h"
+#if SERVO_ENABLE == true
+
 #include <stdbool.h>
 #include <inttypes.h>
 #include <avr/interrupt.h>
 
 #include "utils.h"
-#include "config.h"
 #include "alnitak.h"
 #include "settings.h"
 
@@ -59,4 +61,5 @@ void setShutter(ShutterStatus val);
 */
 void setServoTarget(uint16_t pulseWidth);
 
+#endif
 #endif

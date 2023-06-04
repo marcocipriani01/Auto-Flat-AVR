@@ -1,4 +1,5 @@
 #include "shutter.h"
+#if SERVO_ENABLE == true
 
 volatile uint16_t currentServoVal;
 volatile uint16_t targetServoVal;
@@ -58,3 +59,5 @@ ISR(TIMER1_COMPA_vect) {
     // Toggle the servo pin
     PORTD ^= _BV(PD5);
 }
+
+#endif
