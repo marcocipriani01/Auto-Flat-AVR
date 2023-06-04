@@ -9,16 +9,16 @@
 #include "alnitak.h"
 
 typedef struct {
-    uint8_t brightness;
+    volatile uint8_t brightness;
 #if SERVO_ENABLE == true
-    uint16_t servoStep;
-    uint16_t openVal;
-    uint16_t closedVal;
-    ShutterStatus shutterStatus;
+    volatile uint16_t servoStep;
+    volatile uint16_t openVal;
+    volatile uint16_t closedVal;
+    volatile ShutterStatus shutterStatus;
 #endif
 } Settings;
 
-extern Settings settings;
+extern volatile Settings settings;
 
 uint8_t calcSettingsChecksum();
 void loadSettings();

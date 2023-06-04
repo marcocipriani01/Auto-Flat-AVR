@@ -1,6 +1,6 @@
 #include "settings.h"
 
-Settings settings;
+volatile Settings settings;
 
 uint8_t calcSettingsChecksum() {
     uint8_t sum = 0;

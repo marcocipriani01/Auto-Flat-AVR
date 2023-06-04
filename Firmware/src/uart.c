@@ -1,10 +1,10 @@
 #include "uart.h"
 
-CircBuffer txBuff;
-CircBuffer rxBuff;
+volatile CircBuffer txBuff;
+volatile CircBuffer rxBuff;
 
-uint8_t commandDelimiter;
-CommandHandler commandHandler;
+volatile uint8_t commandDelimiter;
+volatile CommandHandler commandHandler;
 
 void uartBegin(uint16_t baudrate, uint16_t buffersSize) {
     // Set the baudrate

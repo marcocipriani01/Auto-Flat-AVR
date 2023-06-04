@@ -16,12 +16,12 @@
 #define UDRE_ISR USART_UDRE_vect
 #endif
 
-extern CircBuffer txBuff;
-extern CircBuffer rxBuff;
+extern volatile CircBuffer txBuff;
+extern volatile CircBuffer rxBuff;
 
 typedef void (*CommandHandler)(CircBuffer* buffer);
-extern uint8_t commandDelimiter;
-extern CommandHandler commandHandler;
+extern volatile uint8_t commandDelimiter;
+extern volatile CommandHandler commandHandler;
 
 /**
  * Initialize the UART module with the given baudrate and buffer size.
