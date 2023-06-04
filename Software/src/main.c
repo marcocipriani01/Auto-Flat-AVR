@@ -77,13 +77,13 @@ int main(int argc, char** argv) {
 
         switch (command) {
             case 1: {
-                serialPrint(fd, ">L\r");
+                serialPrint(fd, ">L\r>Y\r");
                 printf(GREEN "Done.\n\n" NO_COLOR);
                 break;
             }
 
             case 2: {
-                serialPrint(fd, ">D\r");
+                serialPrint(fd, ">D\r>Y\r");
                 printf(GREEN "Done.\n\n" NO_COLOR);
                 break;
             }
@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
                 printf(YELLOW "Enter the brightness (0-255): > " NO_COLOR);
                 int brightness;
                 if (scanf("%d", &brightness) == 1) {
-                    sprintf(buff, ">B%03d\r", brightness);
+                    sprintf(buff, ">B%03d\r>Y\r", brightness);
                     serialPrint(fd, buff);
                     printf(GREEN "Done.\n\n" NO_COLOR);
                 } else {
@@ -162,6 +162,7 @@ int main(int argc, char** argv) {
                             break;
                         }
                     }
+                    serialPrint(fd, ">Y\r");
                     printf(GREEN "Done.\n\n" NO_COLOR);
                 } else if (posToTune == 2) {
                     serialPrint(fd, ">C\r");
@@ -183,6 +184,7 @@ int main(int argc, char** argv) {
                             break;
                         }
                     }
+                    serialPrint(fd, ">Y\r");
                     printf(GREEN "Done.\n\n" NO_COLOR);
                 } else {
                     printf(RED "Invalid option!\n\n" NO_COLOR);
@@ -198,7 +200,7 @@ int main(int argc, char** argv) {
                 printf(YELLOW "Enter the new speed (0-10) or -1 to go back: > " NO_COLOR);
                 int newSpeed;
                 if ((scanf("%d", &newSpeed) == 1) && (newSpeed >= 0) && (newSpeed <= 10)) {
-                    sprintf(buff, ">Z%02d\r", newSpeed);
+                    sprintf(buff, ">Z%02d\r>Y\r", newSpeed);
                     serialPrint(fd, buff);
                     msleep(100);
                     printf(GREEN "Done.\n\n" NO_COLOR);
