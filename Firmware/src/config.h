@@ -11,19 +11,20 @@
 ////////////////////////////
 #define EL_PANEL_FADE_DELAY 8               // The smaller the value, the faster the panel fades
 #define EL_PANEL_LOG_SCALE true             // Log brightness scale (true/false)
+#define LIGHT_ON_INDICATOR true
 
 ////////////////////////////
 //  SERVO CONFIGURATION   //
 ////////////////////////////
 #define SERVO_ENABLE true                   // Enable servo motor
 #if SERVO_ENABLE == true
-#define SERVO_CLOSED_MIN 2400               // Servo pulse width for +15° angle
-#define SERVO_CLOSED_MAX 2550               // Servo pulse width for -15° angle
-#define SERVO_CLOSED_DEFAULT 2510           // Default closed servo pulse width
+#define SERVO_CLOSED_MIN 2250               // Servo pulse width for +15° angle
+#define SERVO_CLOSED_MAX 2400               // Servo pulse width for -15° angle
+#define SERVO_CLOSED_DEFAULT 2350           // Default closed servo pulse width
 
-#define SERVO_OPEN_MIN 400                  // Servo pulse width for +290° angle
-#define SERVO_OPEN_MAX 1300                 // Servo pulse width for +170° angle
-#define SERVO_OPEN_DEFAULT 550              // Default value
+#define SERVO_OPEN_MIN 600                  // Servo pulse width for +290° angle
+#define SERVO_OPEN_MAX 1000                 // Servo pulse width for +170° angle
+#define SERVO_OPEN_DEFAULT 600              // Default value
 
 #define SERVO_STEP_MIN 5                   // Minimum size of one servo step, in μs
 #define SERVO_STEP_MAX 50                  // Maximum size of one servo step, in μs
