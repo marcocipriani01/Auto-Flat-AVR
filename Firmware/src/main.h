@@ -12,9 +12,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define __DELAY_BACKWARD_COMPATIBLE__
-#include <util/delay.h>
-
 #include <avr/sleep.h>
 
 #include "uart.h"
@@ -26,8 +23,20 @@
 #include "shutter.h"
 #endif
 
+/**
+ * Turns on the EL panel if the shutter is closed.
+ * Also updates the lightOn global variable if updateGlobalVar is true.
+*/
+void setLightOn(bool val, bool updateGlobalVar);
+
+/**
+ * Sets a new target brightness for the EL panel.
+*/
 void setPanelBrigthness(uint8_t brightness);
 
+/**
+ * Called by the USART UDR interrupt when a command is received.
+*/
 void onCommandReceived(CircBuffer* buffer);
 
 #endif

@@ -1,6 +1,7 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#include <stdbool.h>
 #include <inttypes.h>
 #include <avr/eeprom.h>
 
@@ -10,6 +11,7 @@
 
 typedef struct {
     volatile uint8_t brightness;
+    volatile bool lightOn;
 #if SERVO_ENABLE == true
     volatile uint16_t servoStep;
     volatile uint16_t openVal;

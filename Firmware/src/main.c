@@ -1,11 +1,10 @@
 #include "main.h"
 
-bool lightOn = false;
-uint8_t targetBrightness = 0;
+volatile uint8_t targetBrightness = 0;
 
 #if ENCODER_ENABLE == true
-bool lastEncoderClk = false;
-bool lastEncoderBtn = false;
+volatile bool lastEncoderClk = false;
+volatile bool lastEncoderBtn = false;
 #endif
 
 int main(void) {
@@ -26,6 +25,7 @@ int main(void) {
     TCCR2B = _BV(CS21) | _BV(CS20);                       // Prescaler 32, 980Hz
     DDRD |= _BV(PD3);                                     // Set pin PD3 as output
     setPanelBrigthness(settings.brightness);              // Load brightness from settings
+    setLightOn(settings.lightOn, false);                  // Load lightOn from settings
 
     // Rotary brightness encoder
 #if ENCODER_ENABLE == true
@@ -47,23 +47,31 @@ int main(void) {
     TIMSK0 |= _BV(OCIE0A);                                // Enable timer 0 Output Compare Match interrupt
 #endif
 
+    // EL panel on indicator LED, pin PB5
+#if LIGHT_ON_INDICATOR == true
+    DDRB |= _BV(PB5);                                     // Set pin PB5 as output
+    PORTB &= ~_BV(PB5);                                   // Turn off the LED
+#endif
+
     // Enable global interrupts and sleep mode
     set_sleep_mode(SLEEP_MODE_IDLE);
     sei();
 
     while (1) {
+#if SERVO_ENABLE == true
         // Check if the shutter status has changed, then save it to EEPROM
         if ((shutterStatus != MOVING) && (shutterStatus != settings.shutterStatus)) {
             if (shutterStatus == CLOSED) {
                 settings.shutterStatus = shutterStatus;
                 saveSettings();
                 // If the shutter is closed, the light can be turned on
-                if (lightOn) targetBrightness = settings.brightness;
+                setLightOn(settings.lightOn, false);
             } else if (shutterStatus == OPEN) {
                 settings.shutterStatus = shutterStatus;
                 saveSettings();
             }
         }
+#endif
 
         // Nothing to do, go to sleep
         sleep_mode();
@@ -87,13 +95,10 @@ ISR(TIMER0_COMPA_vect){
 // Used to read the encoder button
 ISR(TIMER0_OVF_vect){
     bool btn = PINB & _BV(PB0);
-    if ((!btn) && (lastEncoderBtn)) {
-        lightOn = !lightOn;
-        setPanelBrigthness(settings.brightness);
-    }
+    if ((!btn) && (lastEncoderBtn))
+        setLightOn(!settings.lightOn, true);
     lastEncoderBtn = btn;
 }
-#endif
 
 // Pin change interrupt 0
 // Called when the encoder clock changes
@@ -107,13 +112,36 @@ ISR(PCINT0_vect) {
     }
     lastEncoderClk = currClk;
 }
+#endif
 
-inline void setPanelBrigthness(uint8_t brightness) {
+void setLightOn(bool val, bool updateGlobalVar) {
+    if (updateGlobalVar)
+        settings.lightOn = val;
+
+    if (val) {
+#if SERVO_ENABLE == true
+        if (shutterStatus == CLOSED)
+            targetBrightness = settings.brightness;
+#else
+        targetBrightness = settings.brightness;
+#endif
+#if LIGHT_ON_INDICATOR == true
+        PORTB |= _BV(PB5);
+#endif
+    } else {
+        targetBrightness = 0;
+#if LIGHT_ON_INDICATOR == true
+        PORTB &= ~_BV(PB5);
+#endif
+    }
+}
+
+void setPanelBrigthness(uint8_t brightness) {
     settings.brightness = brightness;
 #if SERVO_ENABLE == true
-    if (lightOn && (shutterStatus == CLOSED))
+    if (settings.lightOn && (shutterStatus == CLOSED))
 #else
-    if (lightOn)
+    if (settings.lightOn)
 #endif
         targetBrightness = brightness;
     else
@@ -151,7 +179,7 @@ void onCommandReceived(CircBuffer* buffer) {
                 sprintf(temp, "*O%dOOO\n", DEVICE_ID);
                 print(temp);
                 setShutter(OPEN);
-                OCR2B = targetBrightness = 0;
+                setLightOn(false, false);
                 break;
             }
 
@@ -178,13 +206,7 @@ void onCommandReceived(CircBuffer* buffer) {
             case 'L': {
                 sprintf(temp, "*L%dOOO\n", DEVICE_ID);
                 print(temp);
-                lightOn = true;
-#if SERVO_ENABLE == true
-                if (shutterStatus == CLOSED)
-                    targetBrightness = settings.brightness;
-#else
-                targetBrightness = settings.brightness;
-#endif
+                setLightOn(true, true);
                 break;
             }
 
@@ -197,8 +219,7 @@ void onCommandReceived(CircBuffer* buffer) {
             case 'D': {
                 sprintf(temp, "*D%dOOO\n", DEVICE_ID);
                 print(temp);
-                lightOn = false;
-                targetBrightness = 0;
+                setLightOn(false, true);
                 break;
             }
 
@@ -247,9 +268,9 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'S': {
 #if SERVO_ENABLE == true
-                sprintf(temp, "*S%d%d%d%d\n", DEVICE_ID, (shutterStatus == MOVING), lightOn, shutterStatus);
+                sprintf(temp, "*S%d%d%d%d\n", DEVICE_ID, (shutterStatus == MOVING), settings.lightOn, shutterStatus);
 #else
-                sprintf(temp, "*S%d0%d0\n", DEVICE_ID, lightOn);
+                sprintf(temp, "*S%d0%d0\n", DEVICE_ID, settings.lightOn);
 #endif
                 print(temp);
                 break;
@@ -278,7 +299,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'Q': {
                 if (circBufferPopArray(buffer, (uint8_t*) temp, 3) == BUFFER_EMPTY) break;
-                settings.openVal = linearMap(atoi(temp), 0, 100, SERVO_OPEN_MAX, SERVO_OPEN_MIN);
+                settings.openVal = linearMap(atoi(temp), 0, 100, SERVO_OPEN_MIN, SERVO_OPEN_MAX);
                 sprintf(temp, "*Q%d%04d\n", DEVICE_ID, settings.openVal);
                 print(temp);
                 if (shutterStatus == OPEN)
@@ -296,7 +317,7 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'K': {
                 if (circBufferPopArray(buffer, (uint8_t*) temp, 3) == BUFFER_EMPTY) break;
-                settings.closedVal = linearMap(atoi(temp), 0, 100, SERVO_CLOSED_MAX, SERVO_CLOSED_MIN);
+                settings.closedVal = linearMap(atoi(temp), 0, 100, SERVO_CLOSED_MIN, SERVO_CLOSED_MAX);
                 sprintf(temp, "*K%d%04d\n", DEVICE_ID, settings.closedVal);
                 print(temp);
                 if (shutterStatus == CLOSED)
@@ -310,7 +331,7 @@ void onCommandReceived(CircBuffer* buffer) {
              *      xxx = servo speed, 0-10
              *  Return : *Qiiyyy\n
              *      ii  = deviceId
-             *      yyy = the servo step delay
+             *      yyy = the servo speed
             */
             case 'Z': {
                 if (circBufferPopArray(buffer, (uint8_t*) temp, 2) == BUFFER_EMPTY) break;
@@ -319,6 +340,7 @@ void onCommandReceived(CircBuffer* buffer) {
                 print(temp);
                 break;
             }
+#endif
 
             /*
              *  Save settings to EEPROM (unofficial command)
@@ -327,12 +349,11 @@ void onCommandReceived(CircBuffer* buffer) {
              *      ii = deviceId
             */
             case 'Y': {
-                saveSettings();
                 sprintf(temp, "*Y%dOOO\n", DEVICE_ID);
                 print(temp);
+                saveSettings();
                 break;
             }
-#endif
 
             /*
              *  Get settings (unofficial command)
@@ -347,17 +368,17 @@ void onCommandReceived(CircBuffer* buffer) {
             */
             case 'T': {
 #if SERVO_ENABLE == true
-                uint8_t openVal = linearMap(settings.openVal, SERVO_OPEN_MAX, SERVO_OPEN_MIN, 0, 100),
-                    closedVal = linearMap(settings.closedVal, SERVO_CLOSED_MAX, SERVO_CLOSED_MIN, 0, 100),
+                uint8_t openVal = linearMap(settings.openVal, SERVO_OPEN_MIN, SERVO_OPEN_MAX, 0, 100),
+                    closedVal = linearMap(settings.closedVal, SERVO_CLOSED_MIN, SERVO_CLOSED_MAX, 0, 100),
                     servoSpeed = linearMap(settings.servoStep, SERVO_STEP_MIN, SERVO_STEP_MAX, 0, 10),
                     shutterVal = (uint8_t) shutterStatus;
 #else
                 uint8_t openVal = 0,
                     closedVal = 0,
                     servoSpeed = 0,
-                    shutterStatus = 0;
+                    shutterVal = 0;
 #endif
-                sprintf(temp, "*T%03d%03d%02d%d%d%03d\n", openVal, closedVal, servoSpeed, shutterVal, lightOn, settings.brightness);
+                sprintf(temp, "*T%03d%03d%02d%d%d%03d\n", openVal, closedVal, servoSpeed, shutterVal, settings.lightOn, settings.brightness);
                 print(temp);
                 break;
             }

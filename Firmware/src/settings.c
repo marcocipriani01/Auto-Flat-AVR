@@ -37,6 +37,7 @@ void loadSettings() {
         settings.shutterStatus = CLOSED;
 #endif
         settings.brightness = 255;
+        settings.lightOn = false;
         for (uint8_t i = 0; i < sizeof(Settings); ++i) {
             eeprom_update_byte((uint8_t*) i, dst[i]);
         }
